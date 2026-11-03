@@ -2,7 +2,7 @@
   "application": "MediaMatrix",
   "version": "1.0.0",
   "releaseDate": "2026-11-03",
-  "generatedAt": "2026-11-03T10:46:07Z",
+  "generatedAt": "2026-11-03T10:58:26Z",
   "environment": {
     "node": "22.22.3",
     "pnpm": "9.15.9",
@@ -105,6 +105,12 @@
       "evidence": "Not executed locally because Chromium installation failed. Authored desktop/mobile/public API assertions are not claimed as passed."
     },
     {
+      "name": "ci-production-browser-tests",
+      "status": "passed",
+      "command": "GitHub Actions browser job: pnpm test:e2e",
+      "evidence": "Run 41623182929 passed all six Chromium desktop/mobile tests against the production standalone build. This does not replace real authorized media playback tests."
+    },
+    {
       "name": "postgresql-migration-and-seed",
       "status": "unverified",
       "command": "pnpm db:deploy && pnpm db:seed",
@@ -136,9 +142,15 @@
       "evidence": "FFmpeg/ffprobe were unavailable. Helper arguments and real-filesystem job-store behavior were tested without claiming transcoding."
     },
     {
-      "name": "docker-build-and-compose-runtime",
+      "name": "ci-docker-image-builds",
+      "status": "passed",
+      "command": "GitHub Actions containers job",
+      "evidence": "Run 41623182929 built both web and transcoder Docker images and executed ffmpeg -version in the transcoder image. No media transcode or Compose stack was run."
+    },
+    {
+      "name": "docker-compose-runtime",
       "status": "unverified",
-      "evidence": "Docker was unavailable. Dockerfiles and Compose received structural validation only."
+      "evidence": "Docker was unavailable locally and CI builds images without starting the Compose stack. PostgreSQL/web/worker/transcoder Compose runtime remains unverified."
     },
     {
       "name": "wordpress-and-blogger-installation",
@@ -157,8 +169,9 @@
     },
     {
       "name": "github-actions-ci",
-      "status": "unverified",
-      "evidence": "Workflow is configured; remote CI evidence is pending branch push."
+      "status": "passed",
+      "command": "GitHub Actions run 41623182929",
+      "evidence": "Quality, browser, containers, and exports jobs all passed on implementation commit 72dd18bf00b5de8df56bd0e75bab5e486d607b93. The subsequent edit only records this evidence and does not change application/runtime code."
     }
   ],
   "notes": [

@@ -32,6 +32,15 @@
 
 See `release/verification.json` for commands/status and `docs/TESTING.md` for the external verification matrix.
 
+## Remote CI verification
+
+GitHub Actions run `41623182929` passed all four jobs on implementation commit `72dd18b`:
+
+- Quality: frozen install, Prisma validate/generate, lint, typechecks, tests, production build, configuration validation, and production audit.
+- Browser: all six Chromium desktop/mobile tests against the production standalone build.
+- Containers: web and transcoder image builds plus `ffmpeg -version` inside the transcoder image.
+- Exports: all five packages generated, independently validated, and uploaded as a retained CI artifact.
+
 ## Known boundaries
 
 The initial PostgreSQL migration is manually authored and structurally tested but has not been applied to a database in this environment. Playwright Chromium could not be downloaded because the CDN connection failed, so browser assertions remain unexecuted locally. Live TMDB/availability/GitHub/Jellyfin/SMTP services, real media playback, FFmpeg, Docker, WordPress/Blogger installation, and Vercel/Netlify deployment require authorized external environments and are not claimed as locally verified.
