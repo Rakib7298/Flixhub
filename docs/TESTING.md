@@ -124,6 +124,17 @@ GitHub Actions runs quality, browser, container-build, and export jobs. Quality 
 
 The existing action majors were retained for this mixed phase. Checkout/setup-node/upload-artifact v7 and pnpm/action-setup v6 were evaluated on 2026-11-03; their multi-major runtime/behavior changes belong in an isolated maintenance change rather than being hidden in Phase 2.
 
+### Phase 2 CI evidence — 2026-11-03
+
+GitHub Actions run [41636237671](https://github.com/Rakib7298/Flixhub/actions/runs/41636237671), testing commit `f93a61687c0e96640aee0993fa9b8d2ab29c1b3d`, passed all four jobs:
+
+- **Quality:** 41/41 unit tests; **18 integration passed, 3 skipped**; 10/10 security tests; lint, 16 workspace typechecks, build, configuration validation, and production audit passed. Integration logged PostgreSQL 17.11 with `migration strategy: prisma` and one applied migration; all seven disposable database tests passed.
+- **Browser:** **19 passed, 1 skipped** across 20 desktop/mobile scenarios. The only skip is the desktop project copy of the explicitly mobile-only navigation assertion.
+- **Containers:** web/transcoder images built and the transcoder image's FFmpeg executable ran successfully.
+- **Exports:** all configured distributions generated, validated, and uploaded by the existing export gate.
+
+The three integration skips remain the doubly opt-in live TMDB tests. This run does not claim live provider connectivity, production database operations, authorized playback, or deployment.
+
 ## Phase 2 local evidence snapshot — 2026-11-03
 
 - Frozen lockfile install: passed.
@@ -134,5 +145,5 @@ The existing action majors were retained for this mixed phase. Checkout/setup-no
 - Deployment configuration: 7/7 structural checks passed.
 - Production dependency audit: no known vulnerabilities.
 - Production build: passed; 20 static pages and standalone assets prepared.
-- Playwright: 20 tests discovered across two projects; local execution unavailable, CI execution required.
+- Playwright: 20 tests discovered across two projects; local execution unavailable (successful CI execution is recorded above).
 - `git diff --check`: passed.

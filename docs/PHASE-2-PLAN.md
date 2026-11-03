@@ -1,6 +1,7 @@
 # Phase 2 implementation plan — core validation and discovery
 
-**Status:** approved for implementation; no later phase is authorized  
+**Status:** implemented; available local and CI gates passed, with external acceptance limits recorded in `docs/TESTING.md`; no later phase is authorized
+
 **Baseline:** `7e3352b454238ae76b303fe2832d6c6a3a1b912b`  
 **Architecture:** preserve the existing Next.js modular monolith, Prisma persistence, NextAuth authentication, provider services, and Vitest/Playwright test stack.
 

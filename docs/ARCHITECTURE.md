@@ -71,7 +71,7 @@ Shared packages must not import application pages or route handlers. Browser-saf
 
 PostgreSQL stores identity, metadata, availability snapshots, library state, encrypted playlist/source values, settings, jobs and audit events. Prisma Client 7 uses the PostgreSQL driver adapter. The client initializes lazily so an unconfigured public build does not open a database connection.
 
-The initial migration is in `packages/database/prisma/migrations`. It remains manually authored rather than native-diff-generated. Phase 2 executes it against disposable PostgreSQL 17 clusters: local tests can apply the SQL files directly, while CI is configured to run real `prisma migrate deploy` and verify migration records. The same ephemeral clusters execute the seed and database-backed auth/library acceptance. None of these operations targets a shared or production database; applying migrations there remains operator-approved.
+The initial migration is in `packages/database/prisma/migrations`. It remains manually authored rather than native-diff-generated. Phase 2 executes it against disposable PostgreSQL 17 clusters: local tests apply the SQL files directly, and CI verified real `prisma migrate deploy` plus migration records. The same ephemeral clusters execute the seed and database-backed auth/library acceptance. None of these operations targets a shared or production database; applying migrations there remains operator-approved.
 
 Transcoder state/output uses a worker-local durable directory. Source exports use an external operator-selected directory. Neither is automatically a public object store.
 

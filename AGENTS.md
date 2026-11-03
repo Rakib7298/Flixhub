@@ -2,7 +2,7 @@
 
 ## Scope and review gates
 
-- The active assignment is Phase 2 (core validation and discovery). **Do not begin later phases without new explicit human approval.**
+- Phase 2 (core validation and discovery) is the latest approved implementation scope. **Do not begin later phases without new explicit human approval.**
 - Preserve working features. The repository already contains later-phase modules; their presence is not permission to rewrite or extend them during this review.
 - Do not deploy to production, apply destructive migrations, seed real environments, or configure live paid services without explicit approval.
 - Keep changes scoped and use focused commits. Do not commit generated builds, dependencies, exports, database dumps, or secrets.

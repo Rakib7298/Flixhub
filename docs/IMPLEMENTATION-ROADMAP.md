@@ -42,13 +42,13 @@ The repository already contains later-phase source modules. They are preserved a
 
 ## Phase 2 — core validation and discovery
 
-> Implementation and local verification are complete; real Prisma CLI migration and expanded browser execution remain CI review gates at this checkpoint.
+> Implementation and available automated verification are complete. GitHub Actions run [41636237671](https://github.com/Rakib7298/Flixhub/actions/runs/41636237671) passed the real Prisma migration, quality, browser, container, and export gates. Authorized live-provider and operator recovery checks remain open external acceptance items.
 
 ### 2.1 Isolated database acceptance
 
 - [x] Provision a disposable PostgreSQL 17 cluster with generated test-only credentials and automatic cleanup.
 - [x] Apply the checked-in SQL migration locally and compare actual tables/enums with the Prisma model contract.
-- [ ] Complete real `prisma migrate deploy` acceptance in CI (configured; execution pending).
+- [x] Complete real `prisma migrate deploy` acceptance in CI (PostgreSQL 17.11, one migration, seven database tests passed; live TMDB remained separately skipped).
 - [x] Seed non-production roles/admin credentials and canonical genres without logging secrets.
 - [x] Exercise registration, credentials, session invalidation, RBAC, profile/preferences, watchlist, favorites, history and progress.
 - [ ] Perform operator-approved rollback/recovery and backup/restore acceptance (not attempted; no shared data touched).
@@ -64,7 +64,7 @@ The repository already contains later-phase source modules. They are preserved a
 
 - [x] Review home, catalog, filters, search and detail journeys and preserve existing server-rendering architecture.
 - [x] Implement/test keyboard navigation, focus states, reduced motion, loading/error/empty states and accessible names.
-- [ ] Execute the expanded 20-scenario desktop/mobile Playwright suite in CI (20 discovered locally; Chromium execution unavailable locally).
+- [x] Execute the expanded 20-scenario desktop/mobile Playwright suite in CI: 19 passed and one desktop copy of the mobile-only navigation test skipped by design.
 - [ ] Run browser journeys against live test-provider responses where permitted; this remains tied to authorized TMDB credentials.
 
 ### 2.4 Foundation hardening carried into Phase 2
@@ -73,7 +73,7 @@ The repository already contains later-phase source modules. They are preserved a
 - [x] Enforce `no-explicit-any` and `error-boundaries` globally; confine remaining effect-rule debt to six named legacy components.
 - [x] Test and document the process-local rate-limit contract and the shared/edge requirement before multi-instance deployment.
 - [x] Evaluate action major upgrades; defer checkout/setup-node/upload-artifact v7 and pnpm/action-setup v6 to isolated maintenance.
-- [ ] Pass the complete Phase 2 GitHub Actions review gate and inspect the final diff before delivery.
+- [x] Pass the complete Phase 2 GitHub Actions review gate and inspect the final diff before delivery (quality, browser, containers, and exports green).
 
 ## Later phases — not active
 

@@ -29,7 +29,7 @@ WordPress and Blogger are **presentation editions only**. They call read-only pu
 - [Phase 2 implementation plan](docs/PHASE-2-PLAN.md)
 - [Engineering guide](AGENTS.md)
 
-Phase 0 (audit) and Phase 1 (foundation) are complete. Phase 2 (core validation and discovery) is explicitly approved; later-phase work still requires new owner instruction.
+Phase 0 (audit) and Phase 1 (foundation) are complete. Phase 2 implementation and available local/CI validation are complete; authorized live-provider and operator recovery checks remain open as documented. Later-phase work still requires new owner instruction.
 
 ## Stack and repository layout
 
