@@ -1,0 +1,109 @@
+name: MediaMatrix quality gate
+
+on:
+  push:
+    branches: [main, "arena/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mediamatrix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+      DIRECT_URL: postgresql://build:build@localhost:5432/build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:validate
+      - run: pnpm db:generate
+      - run: pnpm lint
+      - run: pnpm -r --no-bail --if-present typecheck
+      - run: pnpm test:unit
+      - name: Isolated PostgreSQL migration and provider integration
+        run: pnpm test:integration
+        env:
+          MEDIAMATRIX_TEST_MIGRATION: prisma
+      - run: pnpm test:security
+      - run: pnpm build
+      - run: pnpm validate:config
+      - run: pnpm audit --prod --audit-level=high
+
+  browser:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://build:build@localhost:5432/build
+      DIRECT_URL: postgresql://build:build@localhost:5432/build
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      AUTH_TRUST_HOST: true
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm db:generate
+      - run: pnpm build
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: warn
+          retention-days: 7
+
+  containers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f infrastructure/docker/web.Dockerfile -t mediamatrix-web:ci .
+      - run: docker build -f infrastructure/docker/transcoder.Dockerfile -t mediamatrix-transcoder:ci .
+      - run: docker run --rm --entrypoint ffmpeg mediamatrix-transcoder:ci -version
+
+  exports:
+    runs-on: ubuntu-latest
+    needs: quality
+    env:
+      MEDIAMATRIX_EXPORT_DIR: /tmp/mediamatrix-exports
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm export:all
+      - run: pnpm validate:export
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mediamatrix-distributions
+          path: /tmp/mediamatrix-exports
+          retention-days: 14

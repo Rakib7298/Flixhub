@@ -1,0 +1,17 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { Download, PackageCheck } from "lucide-react";
+import { apiRequest } from "@mediamatrix/api-client";
+import { Badge, Button, EmptyState, GlassCard } from "@mediamatrix/ui";
+
+interface Artifact { name: string; bytes: number; sha256: string }
+interface Manifest { version: string; commit: string; generatedAt: string; artifacts: Artifact[]; validation: string[] }
+export function ExportManager() {
+  const [manifest, setManifest] = useState<Manifest | null>(null); const [available, setAvailable] = useState(true); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const load = useCallback(async () => { try { const result = await apiRequest<{ manifest: Manifest | null }>("/api/admin/exports"); setManifest(result.manifest); } catch (caught) { if (caught && typeof caught === "object" && "status" in caught && caught.status === 503) setAvailable(false); else setError(caught instanceof Error ? caught.message : "Export status unavailable"); } }, []);
+  useEffect(() => { void load(); }, [load]);
+  async function generate() { setBusy(true); setError(""); try { const result = await apiRequest<{ manifest: Manifest }>("/api/admin/exports", { method: "POST", body: JSON.stringify({}) }); setManifest(result.manifest); } catch (caught) { setError(caught instanceof Error ? caught.message : "Export failed"); } finally { setBusy(false); } }
+  if (!available) return <EmptyState title="Use the CLI export on this host" description="Runtime exports require MEDIAMATRIX_EXPORTS_ENABLED=true on a self-hosted Node deployment with Git, tar, a clean committed checkout, and MEDIAMATRIX_EXPORT_DIR outside the source tree. Vercel and Netlify must use pnpm export:all locally or in CI." icon={<PackageCheck size={22} />} />;
+  return <div className="space-y-5"><GlassCard className="p-5"><h2 className="text-lg font-bold">Generate validated distributions</h2><p className="mt-1 text-xs leading-5 text-zinc-500">Creates Full Source, Vercel, Netlify, WordPress, and Blogger artifacts from the current clean Git HEAD. Build metadata and checksums are generated outside the source tree. A dirty checkout is rejected.</p><Button className="mt-5" onClick={generate} loading={busy}><PackageCheck size={16} />Generate all packages</Button></GlassCard>{error && <p role="alert" className="text-sm text-red-300">{error}</p>}{manifest && <><GlassCard className="p-5"><div className="flex flex-wrap items-center gap-2"><Badge tone="green">Package validation passed</Badge><span className="font-mono text-[10px] text-zinc-500">{manifest.commit}</span></div><p className="mt-3 text-xs text-zinc-500">Generated {new Date(manifest.generatedAt).toLocaleString()}</p><ul className="mt-3 space-y-1 text-[11px] text-zinc-500">{manifest.validation.map((item) => <li key={item}>✓ {item}</li>)}</ul></GlassCard><div className="space-y-3">{manifest.artifacts.map((item) => <GlassCard key={item.name} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><h3 className="break-all text-sm font-semibold">{item.name}</h3><p className="mt-1 text-xs text-zinc-500">{(item.bytes / 1024).toFixed(1)} KiB</p><p className="mt-1 break-all font-mono text-[10px] text-zinc-600">SHA-256 {item.sha256}</p></div><a href={`/api/admin/exports/${encodeURIComponent(item.name)}`} download><Button size="sm" variant="secondary"><Download size={14} />Download</Button></a></GlassCard>)}</div></>}</div>;
+}

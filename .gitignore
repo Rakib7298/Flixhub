@@ -1,0 +1,40 @@
+# Dependencies and builds
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+*.tsbuildinfo
+packages/database/src/generated/
+
+# Tests
+playwright-report/
+test-results/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime data
+*.log
+tmp/
+.tmp/
+data/
+storage/
+!infrastructure/storage/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Database backups must never enter source packages
+*.dump
+*.sql.gz

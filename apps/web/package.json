@@ -1,0 +1,48 @@
+{
+  "name": "@mediamatrix/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 3000",
+    "build": "next build && node ../../scripts/prepare-standalone.mjs",
+    "start": "node .next/standalone/apps/web/server.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@mediamatrix/api-client": "workspace:*",
+    "@mediamatrix/config": "workspace:*",
+    "@mediamatrix/cms-editions": "workspace:*",
+    "@mediamatrix/database": "workspace:*",
+    "@mediamatrix/github-sync": "workspace:*",
+    "@mediamatrix/media-engine": "workspace:*",
+    "@mediamatrix/media-server": "workspace:*",
+    "@mediamatrix/playlist-manager": "workspace:*",
+    "@mediamatrix/shared": "workspace:*",
+    "@mediamatrix/streaming-availability": "workspace:*",
+    "@mediamatrix/tmdb": "workspace:*",
+    "@mediamatrix/ui": "workspace:*",
+    "bcryptjs": "^3.0.3",
+    "dashjs": "^5.0.3",
+    "framer-motion": "^12.23.24",
+    "hls.js": "^1.6.13",
+    "lucide-react": "^0.468.0",
+    "next": "15.5.28",
+    "next-auth": "5.0.0-beta.32",
+    "nodemailer": "10.3.1",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.19.1",
+    "@types/nodemailer": "^7.0.4",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "tailwindcss": "3.4.19",
+    "typescript": "^5.9.3"
+  }
+}

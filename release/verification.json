@@ -1,0 +1,183 @@
+{
+  "application": "MediaMatrix",
+  "version": "1.0.0",
+  "releaseDate": "2026-11-03",
+  "generatedAt": "2026-11-03T11:21:27Z",
+  "environment": {
+    "node": "22.22.3",
+    "pnpm": "9.15.9",
+    "platform": "Linux sandbox",
+    "databaseAvailable": false,
+    "dockerAvailable": false,
+    "ffmpegAvailable": false,
+    "phpAvailable": false
+  },
+  "localQualityGate": "passed",
+  "checks": [
+    {
+      "name": "dependency-install",
+      "status": "passed",
+      "command": "pnpm install",
+      "evidence": "Frozen-lockfile installation passed during the Phase 1 review; the lockfile was already up to date and unchanged."
+    },
+    {
+      "name": "prisma-client-generation",
+      "status": "passed",
+      "command": "pnpm db:generate",
+      "evidence": "Prisma Client 7.10.1 generated successfully. This is not evidence of migration execution."
+    },
+    {
+      "name": "eslint",
+      "status": "passed",
+      "command": "pnpm lint",
+      "evidence": "Completed with exit code 0."
+    },
+    {
+      "name": "workspace-typecheck",
+      "status": "passed",
+      "command": "pnpm -r --no-bail --if-present typecheck",
+      "evidence": "16/16 workspace projects with typecheck scripts passed."
+    },
+    {
+      "name": "automated-tests",
+      "status": "passed",
+      "command": "pnpm test",
+      "evidence": "39/39 tests passed in 11/11 files, including focused environment-validation and health checks."
+    },
+    {
+      "name": "security-tests",
+      "status": "passed",
+      "command": "pnpm test:security",
+      "evidence": "10/10 tests passed in 2/2 files."
+    },
+    {
+      "name": "mocked-integration-tests",
+      "status": "passed",
+      "command": "pnpm test:integration",
+      "evidence": "3/3 mocked TMDB transport tests passed; no live-provider claim."
+    },
+    {
+      "name": "deployment-structure",
+      "status": "passed",
+      "command": "pnpm validate:config",
+      "evidence": "7/7 structural checks passed. Provider deployment and Docker execution were not performed."
+    },
+    {
+      "name": "production-dependency-audit",
+      "status": "passed",
+      "command": "pnpm audit --prod --audit-level=high",
+      "evidence": "No known vulnerabilities found at verification time."
+    },
+    {
+      "name": "production-build",
+      "status": "passed",
+      "command": "pnpm build",
+      "evidence": "Next.js 15.5.28 compiled, linted, type-checked, generated 20 static pages, collected traces, and prepared standalone static/public assets."
+    },
+    {
+      "name": "standalone-production-smoke",
+      "status": "passed",
+      "command": "pnpm start plus curl HTTP checks",
+      "evidence": "Home 200, login 200, referenced standalone JS asset 200, CSP and nosniff present, unconfigured discovery 503, unavailable database health 503/degraded. No real database or provider credentials were used."
+    },
+    {
+      "name": "wordpress-browser-javascript-syntax",
+      "status": "passed",
+      "command": "node --check packages/cms-editions/wordpress/mediamatrix/assets/app.js",
+      "evidence": "JavaScript syntax passed. PHP runtime and WordPress installation were unavailable."
+    },
+    {
+      "name": "distribution-export-validation",
+      "status": "passed",
+      "command": "pnpm export:all && pnpm validate:export && sha256sum -c SHA256SUMS.txt",
+      "evidence": "All five artifacts generated from clean HEAD in /tmp/mediamatrix-exports. Full/Vercel/Netlify archive entry validation, WordPress ZIP validation, Blogger XML validation, independent manifest validation, and all five SHA-256 checks passed."
+    },
+    {
+      "name": "playwright-browser-install",
+      "status": "failed",
+      "command": "pnpm exec playwright install chromium",
+      "evidence": "Playwright 1.64.1 could not download Chrome for Testing 156.0.8078.4 from cdn.playwright.dev because TLS connections repeatedly failed with ECONNRESET."
+    },
+    {
+      "name": "playwright-browser-assertions",
+      "status": "skipped",
+      "command": "pnpm test:e2e",
+      "evidence": "Not executed locally because Chromium installation failed. Authored desktop/mobile/public API assertions are not claimed as passed."
+    },
+    {
+      "name": "ci-production-browser-tests",
+      "status": "passed",
+      "command": "GitHub Actions browser job: pnpm test:e2e",
+      "evidence": "The CI browser job passed against the production standalone build with desktop/mobile projects. The mobile-only assertion is intentionally skipped in the desktop project; applicable assertions and any retries are reported by the individual CI run. This does not replace real authorized media playback tests."
+    },
+    {
+      "name": "postgresql-migration-and-seed",
+      "status": "unverified",
+      "command": "pnpm db:deploy && pnpm db:seed",
+      "evidence": "No PostgreSQL server/psql was available. The manual initial migration is structurally tested, not Prisma-diff-generated or executed."
+    },
+    {
+      "name": "database-backed-auth-and-crud",
+      "status": "unverified",
+      "evidence": "Requires an approved migrated PostgreSQL test database; not executed."
+    },
+    {
+      "name": "live-tmdb-and-availability",
+      "status": "unverified",
+      "evidence": "No live provider credentials/connectivity test was performed. Mocked transport and honest unconfigured responses were tested."
+    },
+    {
+      "name": "real-media-playback",
+      "status": "unverified",
+      "evidence": "No authorized HLS, DASH, direct, Live TV, or Jellyfin media stream/browser codec test was available."
+    },
+    {
+      "name": "github-jellyfin-smtp-integrations",
+      "status": "unverified",
+      "evidence": "No authorized external GitHub repository, Jellyfin server, or SMTP inbox test was performed."
+    },
+    {
+      "name": "ffmpeg-transcoding-runtime",
+      "status": "unverified",
+      "evidence": "FFmpeg/ffprobe were unavailable. Helper arguments and real-filesystem job-store behavior were tested without claiming transcoding."
+    },
+    {
+      "name": "ci-docker-image-builds",
+      "status": "passed",
+      "command": "GitHub Actions containers job",
+      "evidence": "Run 41623182929 built both web and transcoder Docker images and executed ffmpeg -version in the transcoder image. No media transcode or Compose stack was run."
+    },
+    {
+      "name": "docker-compose-runtime",
+      "status": "unverified",
+      "evidence": "Docker was unavailable locally and CI builds images without starting the Compose stack. PostgreSQL/web/worker/transcoder Compose runtime remains unverified."
+    },
+    {
+      "name": "wordpress-and-blogger-installation",
+      "status": "unverified",
+      "evidence": "No WordPress/PHP host or Blogger blog was available. Source structure, XML, JavaScript, and API contracts were tested locally."
+    },
+    {
+      "name": "vercel-and-netlify-deployment",
+      "status": "unverified",
+      "evidence": "No provider project/account deployment was performed. Configuration structure and Next.js build were validated."
+    },
+    {
+      "name": "worker-schedulers",
+      "status": "unverified",
+      "evidence": "Workers typechecked but were not run against live internal endpoints or providers."
+    },
+    {
+      "name": "github-actions-ci",
+      "status": "passed",
+      "command": "GitHub Actions run 41623182929",
+      "evidence": "Quality, browser, containers, and exports jobs all passed on implementation commit 72dd18bf00b5de8df56bd0e75bab5e486d607b93. The subsequent edit only records this evidence and does not change application/runtime code."
+    }
+  ],
+  "notes": [
+    "Passed means the listed local command/check actually completed successfully; it does not imply external provider verification.",
+    "The build used placeholder local PostgreSQL URLs and did not connect during page generation. Health correctly reported the database unreachable at runtime.",
+    "Prisma native schema-engine downloads were unavailable; no claim is made that the manual migration came from prisma migrate diff.",
+    "No secrets, private media URLs, database dumps, or provider credentials are included in this report."
+  ]
+}

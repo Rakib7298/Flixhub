@@ -1,0 +1,10 @@
+{
+  "name": "@mediamatrix/streaming-availability",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json" },
+  "dependencies": { "@mediamatrix/shared": "workspace:*" },
+  "devDependencies": { "typescript": "^5.9.3" }
+}
