@@ -74,9 +74,13 @@ for (const scenario of [
 test("catalog filters are labelled, preserve related parameters, and reset", async ({ page }) => {
   await page.goto("/movies");
   await expect(page.getByRole("heading", { name: "Movies", exact: true })).toBeVisible();
-  await page.getByLabel("Release year").selectOption("2025");
-  await expect(page).toHaveURL(/\/movies\?year=2025$/);
-  await page.getByLabel("Sort by").selectOption("revenue.desc");
+  const releaseYear = page.getByRole("combobox", { name: "Release year", exact: true });
+  await expect(releaseYear).toHaveCount(1);
+  await releaseYear.selectOption("2025");
+  await expect(page).toHaveURL(/\/movies\?sort=popularity\.desc&year=2025$/);
+  const sort = page.getByRole("combobox", { name: "Sort by", exact: true });
+  await expect(sort).toHaveCount(1);
+  await sort.selectOption("revenue.desc");
   await expect(page).toHaveURL(/year=2025/);
   await expect(page).toHaveURL(/sort=revenue.desc/);
   await page.getByRole("button", { name: "Clear filters" }).click();
@@ -86,6 +90,10 @@ test("catalog filters are labelled, preserve related parameters, and reset", asy
 test("keyboard focus is visible and reduced-motion preferences are honored", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  await page.keyboard.press("Tab");
+  const skipLink = page.getByRole("link", { name: "Skip to content" });
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeInViewport();
   await page.keyboard.press("Tab");
   const home = page.getByLabel("MediaMatrix home");
   await expect(home).toBeFocused();
