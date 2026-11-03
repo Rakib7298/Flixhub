@@ -1,0 +1,10 @@
+{
+  "name": "@mediamatrix/transcoder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "dev": "tsx watch src/server.ts", "start": "tsx src/server.ts", "typecheck": "tsc -p tsconfig.json" },
+  "dependencies": { "@mediamatrix/playlist-manager": "workspace:*", "@mediamatrix/shared": "workspace:*", "undici": "^7.16.0", "tsx": "^4.21.0" },
+  "devDependencies": { "@types/node": "^22.19.1", "typescript": "^5.9.3" }
+}

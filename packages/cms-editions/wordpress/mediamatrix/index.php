@@ -1,0 +1,7 @@
+<?php if (!defined('ABSPATH')) { exit; } get_header(); ?>
+<main id="mm-content" class="mm-shell">
+<section class="mm-hero" aria-labelledby="mm-hero-title"><span class="mm-eyebrow">Your next story starts here</span><h1 id="mm-hero-title">Discover something worth watching.</h1><p>Explore real movie and series metadata through your connected MediaMatrix application. Open an official provider when you are ready to watch.</p><form id="mm-search" class="mm-search" role="search"><label class="mm-hidden" for="mm-query">Search movies and series</label><input id="mm-query" name="q" type="search" minlength="2" maxlength="100" placeholder="Search titles…" required><button class="mm-button" type="submit">Search</button></form></section>
+<div class="mm-toolbar"><h2 id="mm-section-title">Discover movies</h2><label><span class="mm-hidden">Catalog</span><select id="mm-type" class="mm-select"><option value="movie">Movies</option><option value="tv">TV series</option></select></label></div>
+<div id="mm-status" class="mm-status" role="status">Connecting to MediaMatrix…</div><div id="mm-grid" class="mm-grid" aria-live="polite"></div><section id="mm-detail" class="mm-detail mm-hidden" aria-live="polite"></section>
+<noscript><p class="mm-status">JavaScript is required for this presentation. Use the primary MediaMatrix application link above for the complete accessible application.</p></noscript>
+</main><?php get_footer(); ?>

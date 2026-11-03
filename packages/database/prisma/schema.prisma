@@ -1,0 +1,561 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleName {
+  USER
+  ADMIN
+}
+
+enum MediaType {
+  movie
+  tv
+}
+
+enum OfferType {
+  subscription
+  free
+  rent
+  buy
+}
+
+enum PlaylistSourceType {
+  URL
+  UPLOAD
+  GITHUB
+}
+
+enum PlaylistStatus {
+  ACTIVE
+  DISABLED
+  ERROR
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  ERROR
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  name      RoleName @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  username           String             @unique
+  passwordHash       String
+  sessionVersion     Int                @default(0)
+  name               String?
+  image              String?
+  roleId             String
+  role               Role               @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  preference         UserPreference?
+  watchlist          Watchlist[]
+  favorites          Favorite[]
+  watchHistory       WatchHistory[]
+  playbackProgress   PlaybackProgress[]
+  playlists          Playlist[]
+  passwordResetTokens PasswordResetToken[]
+  transcodingJobs    TranscodingJob[]
+  auditLogs          AuditLog[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+
+  @@index([roleId])
+  @@index([deletedAt])
+}
+
+model UserPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country           String   @default("BD") @db.Char(2)
+  language          String   @default("en")
+  autoplay          Boolean  @default(false)
+  dataSaver         Boolean  @default(false)
+  reducedMotion     Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model Genre {
+  id        Int
+  name      String
+  type      MediaType
+  movies    MovieGenre[]
+  tvSeries  TvGenre[]
+  updatedAt DateTime     @updatedAt
+
+  @@id([id, type])
+  @@index([type])
+}
+
+model Movie {
+  id                   String                 @id @default(cuid())
+  tmdbId               Int                    @unique
+  title                String
+  originalTitle        String?
+  overview             String                 @db.Text
+  posterPath           String?
+  backdropPath         String?
+  releaseDate          DateTime?
+  runtime              Int?
+  rating               Float                  @default(0)
+  voteCount            Int                    @default(0)
+  popularity           Float                  @default(0)
+  status               String?
+  tagline              String?
+  syncedAt             DateTime               @default(now())
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  genres               MovieGenre[]
+  credits              MediaCredit[]
+  streamingAvailability StreamingAvailability[]
+  watchlist            Watchlist[]
+  favorites            Favorite[]
+  watchHistory         WatchHistory[]
+  playbackProgress     PlaybackProgress[]
+  mediaSources         MediaSource[]
+
+  @@index([releaseDate])
+  @@index([popularity])
+  @@index([rating])
+}
+
+model TvSeries {
+  id                   String                 @id @default(cuid())
+  tmdbId               Int                    @unique
+  name                 String
+  originalName         String?
+  overview             String                 @db.Text
+  posterPath           String?
+  backdropPath         String?
+  firstAirDate         DateTime?
+  rating               Float                  @default(0)
+  voteCount            Int                    @default(0)
+  popularity           Float                  @default(0)
+  status               String?
+  numberOfSeasons      Int                    @default(0)
+  numberOfEpisodes     Int                    @default(0)
+  syncedAt             DateTime               @default(now())
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  genres               TvGenre[]
+  seasons              Season[]
+  credits              MediaCredit[]
+  streamingAvailability StreamingAvailability[]
+  watchlist            Watchlist[]
+  favorites            Favorite[]
+  watchHistory         WatchHistory[]
+  mediaSources         MediaSource[]
+
+  @@index([firstAirDate])
+  @@index([popularity])
+  @@index([rating])
+}
+
+model MovieGenre {
+  movieId   String
+  genreId   Int
+  genreType MediaType @default(movie)
+  movie     Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre     Genre @relation(fields: [genreId, genreType], references: [id, type], onDelete: Cascade)
+
+  @@id([movieId, genreId, genreType])
+  @@index([genreId, genreType])
+}
+
+model TvGenre {
+  tvSeriesId String
+  genreId    Int
+  genreType  MediaType @default(tv)
+  tvSeries   TvSeries @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  genre      Genre    @relation(fields: [genreId, genreType], references: [id, type], onDelete: Cascade)
+
+  @@id([tvSeriesId, genreId, genreType])
+  @@index([genreId, genreType])
+}
+
+model Season {
+  id           String    @id @default(cuid())
+  tmdbId       Int       @unique
+  tvSeriesId   String
+  tvSeries     TvSeries  @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  seasonNumber Int
+  name         String
+  overview     String    @db.Text
+  airDate      DateTime?
+  posterPath   String?
+  episodes     Episode[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([tvSeriesId, seasonNumber])
+  @@index([tvSeriesId])
+}
+
+model Episode {
+  id               String             @id @default(cuid())
+  tmdbId           Int                @unique
+  seasonId         String
+  season           Season             @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  episodeNumber    Int
+  name             String
+  overview         String             @db.Text
+  airDate          DateTime?
+  runtime          Int?
+  stillPath        String?
+  rating           Float              @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  watchHistory     WatchHistory[]
+  playbackProgress PlaybackProgress[]
+  mediaSources     MediaSource[]
+
+  @@unique([seasonId, episodeNumber])
+  @@index([seasonId])
+}
+
+model Person {
+  id          String        @id @default(cuid())
+  tmdbId      Int           @unique
+  name        String
+  biography   String        @db.Text
+  profilePath String?
+  birthday    DateTime?
+  deathday    DateTime?
+  credits     MediaCredit[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model MediaCredit {
+  id         String   @id @default(cuid())
+  personId   String
+  person     Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  movieId    String?
+  movie      Movie?   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvSeriesId String?
+  tvSeries   TvSeries? @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  character  String?
+  job        String?
+  creditOrder Int     @default(0)
+
+  @@unique([personId, movieId, character])
+  @@unique([personId, tvSeriesId, character])
+  @@index([movieId, creditOrder])
+  @@index([tvSeriesId, creditOrder])
+}
+
+model StreamingProvider {
+  id          String                 @id @default(cuid())
+  externalId  String                 @unique
+  name        String
+  logoUrl     String?
+  homepageUrl String?
+  enabled     Boolean                @default(true)
+  availability StreamingAvailability[]
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+}
+
+model StreamingAvailability {
+  id             String            @id @default(cuid())
+  providerId     String
+  provider       StreamingProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  movieId        String?
+  movie          Movie?            @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvSeriesId     String?
+  tvSeries       TvSeries?         @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  country        String            @db.Char(2)
+  offerType      OfferType
+  officialUrl    String?
+  quality        String?
+  lastVerifiedAt DateTime
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([providerId, movieId, country, offerType])
+  @@unique([providerId, tvSeriesId, country, offerType])
+  @@index([movieId, country])
+  @@index([tvSeriesId, country])
+  @@index([lastVerifiedAt])
+}
+
+model Watchlist {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaKey  String
+  mediaType MediaType
+  tmdbId    Int
+  title     String
+  posterPath String?
+  movieId   String?
+  movie     Movie?    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvSeriesId String?
+  tvSeries  TvSeries? @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, mediaKey])
+  @@index([userId, createdAt])
+  @@index([movieId])
+  @@index([tvSeriesId])
+}
+
+model Favorite {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaKey       String
+  title          String
+  mediaType      MediaType?
+  tmdbId         Int?
+  posterPath     String?
+  movieId        String?
+  movie          Movie?        @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvSeriesId     String?
+  tvSeries       TvSeries?     @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  playlistItemId String?
+  playlistItem   PlaylistItem? @relation(fields: [playlistItemId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+
+  @@unique([userId, mediaKey])
+  @@index([userId, createdAt])
+}
+
+model WatchHistory {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaKey       String
+  title          String
+  movieId        String?
+  movie          Movie?        @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvSeriesId     String?
+  tvSeries       TvSeries?     @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  episodeId      String?
+  episode        Episode?      @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  playlistItemId String?
+  playlistItem   PlaylistItem? @relation(fields: [playlistItemId], references: [id], onDelete: Cascade)
+  watchedAt      DateTime      @default(now())
+
+  @@index([userId, watchedAt])
+  @@index([mediaKey])
+}
+
+model PlaybackProgress {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaKey       String
+  title          String
+  posterPath     String?
+  seconds        Float         @default(0)
+  duration       Float         @default(0)
+  movieId        String?
+  movie          Movie?        @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  episodeId      String?
+  episode        Episode?      @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  playlistItemId String?
+  playlistItem   PlaylistItem? @relation(fields: [playlistItemId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime      @default(now())
+
+  @@unique([userId, mediaKey])
+  @@index([userId, updatedAt])
+}
+
+model Playlist {
+  id                   String            @id @default(cuid())
+  ownerId              String
+  owner                User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name                 String
+  sourceType           PlaylistSourceType
+  sourceUrlCiphertext  String?
+  sourceUrlHash        String?
+  contentHash          String?
+  isPublic             Boolean           @default(false)
+  allowPrivateNetwork  Boolean           @default(false)
+  enabled              Boolean           @default(true)
+  status               PlaylistStatus    @default(ACTIVE)
+  refreshMinutes       Int               @default(360)
+  lastSyncAt           DateTime?
+  lastError            String?
+  githubRepository     String?
+  githubBranch         String?
+  githubFilePath       String?
+  githubLastContentSha String?
+  items                PlaylistItem[]
+  syncLogs             PlaylistSyncLog[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@unique([ownerId, sourceUrlHash])
+  @@index([ownerId, enabled])
+  @@index([enabled, lastSyncAt])
+  @@index([isPublic])
+}
+
+model PlaylistItem {
+  id                   String            @id @default(cuid())
+  playlistId           String
+  playlist             Playlist          @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  channelKey           String
+  name                 String
+  streamUrlCiphertext  String
+  streamUrlHash        String
+  logoUrl              String?
+  groupName            String
+  tvgId                String?
+  metadata             Json
+  position             Int
+  isActive             Boolean           @default(true)
+  favorites            Favorite[]
+  watchHistory         WatchHistory[]
+  playbackProgress     PlaybackProgress[]
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@unique([playlistId, channelKey])
+  @@index([playlistId, groupName])
+  @@index([playlistId, name])
+}
+
+model PlaylistSyncLog {
+  id         String       @id @default(cuid())
+  playlistId String
+  playlist   Playlist     @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  status     SyncStatus
+  message    String
+  itemCount  Int          @default(0)
+  startedAt  DateTime     @default(now())
+  finishedAt DateTime?
+
+  @@index([playlistId, startedAt])
+}
+
+model MediaSource {
+  id                String    @id @default(cuid())
+  label             String
+  sourceUrlCiphertext String
+  sourceUrlHash     String
+  format            String
+  requiresAuth      Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  movieId           String?
+  movie             Movie?    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvSeriesId        String?
+  tvSeries          TvSeries? @relation(fields: [tvSeriesId], references: [id], onDelete: Cascade)
+  episodeId         String?
+  episode           Episode?  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@unique([sourceUrlHash])
+  @@index([movieId, isActive])
+  @@index([tvSeriesId, isActive])
+  @@index([episodeId, isActive])
+}
+
+model TranscodingJob {
+  id                   String    @id @default(cuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workerJobId          String?   @unique
+  inputUrlCiphertext   String
+  outputPrefix         String?
+  status               JobStatus @default(QUEUED)
+  progress             Int       @default(0)
+  errorMessage         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, updatedAt])
+}
+
+model APIConfiguration {
+  id               String   @id @default(cuid())
+  key              String   @unique
+  valueCiphertext  String?
+  nonSecretValue   String?
+  enabled          Boolean  @default(false)
+  updatedBy        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  isPublic  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  ipHash    String?
+  metadata  Json
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model BackgroundJob {
+  id           String    @id @default(cuid())
+  type         String
+  payload      Json
+  status       JobStatus @default(QUEUED)
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
+  runAfter     DateTime  @default(now())
+  lockedAt     DateTime?
+  lastError    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, runAfter])
+  @@index([type, createdAt])
+}

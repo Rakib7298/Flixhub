@@ -1,0 +1,68 @@
+{
+  "name": "mediamatrix",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @mediamatrix/web dev",
+    "build": "pnpm db:generate && pnpm --filter @mediamatrix/web build",
+    "start": "pnpm --filter @mediamatrix/web start",
+    "typecheck": "pnpm db:generate && pnpm -r --if-present typecheck",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit packages services apps/web/lib",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:security": "vitest run tests/security",
+    "db:generate": "pnpm --filter @mediamatrix/database generate",
+    "db:migrate": "pnpm --filter @mediamatrix/database migrate",
+    "db:deploy": "pnpm --filter @mediamatrix/database deploy",
+    "db:seed": "pnpm --filter @mediamatrix/database seed",
+    "db:validate": "pnpm --filter @mediamatrix/database validate",
+    "export:full": "node scripts/export-full.mjs",
+    "export:vercel": "node scripts/export-vercel.mjs",
+    "export:netlify": "node scripts/export-netlify.mjs",
+    "export:wordpress": "node scripts/export-wordpress.mjs",
+    "export:blogger": "node scripts/export-blogger.mjs",
+    "export:all": "node scripts/export-all.mjs",
+    "export": "pnpm export:all",
+    "validate:export": "node scripts/validate-export.mjs",
+    "checksums": "node scripts/generate-checksums.mjs",
+    "validate:config": "node scripts/validate-deployment.mjs",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.32",
+      "nodemailer": "10.3.1"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@next/eslint-plugin-next": "15.5.28",
+    "@netlify/plugin-nextjs": "5.16.5",
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^22.19.1",
+    "@vitejs/plugin-react": "^5.1.1",
+    "adm-zip": "^0.5.16",
+    "archiver": "^7.0.1",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "fast-xml-parser": "5.11.2",
+    "globals": "^16.5.0",
+    "next": "15.5.28",
+    "tsx": "^4.21.0",
+    "turbo": "^2.6.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.1",
+    "vitest": "^3.2.4",
+    "xml2js": "^0.6.2",
+    "yaml": "^2.8.2",
+    "zod": "4.6.7"
+  }
+}
