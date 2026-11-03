@@ -108,7 +108,7 @@
       "name": "ci-production-browser-tests",
       "status": "passed",
       "command": "GitHub Actions browser job: pnpm test:e2e",
-      "evidence": "Run 41623182929 passed all six Chromium desktop/mobile tests against the production standalone build. This does not replace real authorized media playback tests."
+      "evidence": "The CI browser job passed against the production standalone build with desktop/mobile projects. The mobile-only assertion is intentionally skipped in the desktop project; applicable assertions and any retries are reported by the individual CI run. This does not replace real authorized media playback tests."
     },
     {
       "name": "postgresql-migration-and-seed",

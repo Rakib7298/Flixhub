@@ -3,8 +3,9 @@ import { expect, test } from "@playwright/test";
 test("home renders an honest unconfigured state with security headers", async ({ page }) => {
   const response = await page.goto("/"); expect(response?.ok()).toBeTruthy();
   await expect(page.getByLabel("MediaMatrix home")).toBeVisible();
-  await expect(page.getByText("Connect TMDB to load real content")).toBeVisible();
-  await expect(page.getByText(/honest empty state rather than sample data/)).toBeVisible();
+  // Several catalog sections can independently render the same honest configuration state.
+  await expect(page.getByRole("heading", { name: "Connect TMDB to load real content" }).first()).toBeVisible();
+  await expect(page.getByText(/honest empty state rather than sample data/).first()).toBeVisible();
   expect(response?.headers()["x-content-type-options"]).toBe("nosniff");
   expect(response?.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   expect(response?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");

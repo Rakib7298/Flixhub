@@ -37,7 +37,7 @@ See `release/verification.json` for commands/status and `docs/TESTING.md` for th
 GitHub Actions run `41623182929` passed all four jobs on implementation commit `72dd18b`:
 
 - Quality: frozen install, Prisma validate/generate, lint, typechecks, tests, production build, configuration validation, and production audit.
-- Browser: all six Chromium desktop/mobile tests against the production standalone build.
+- Browser: Chromium desktop/mobile projects against the production standalone build; the mobile-only assertion is intentionally skipped in the desktop project.
 - Containers: web and transcoder image builds plus `ffmpeg -version` inside the transcoder image.
 - Exports: all five packages generated, independently validated, and uploaded as a retained CI artifact.
 
