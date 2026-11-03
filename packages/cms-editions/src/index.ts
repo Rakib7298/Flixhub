@@ -43,13 +43,14 @@ function exportDirectory(root: string) {
 async function digest(file: string) { return createHash("sha256").update(await readFile(file)).digest("hex"); }
 async function artifact(file: string, contentType: string): Promise<ExportArtifact> { return { name: path.basename(file), bytes: (await stat(file)).size, sha256: await digest(file), contentType }; }
 
-function assertSafeEntries(entries: string[]) {
+export function assertSafeEntries(entries: string[]) {
   const forbidden = /(^|\/)(node_modules|\.next|\.git|dist|build|coverage|playwright-report)(\/|$)|(^|\/)\.env($|\.)/;
   for (const entry of entries) {
     const normalized = entry.replace(/^\.\//, "");
-    if (normalized.includes("..") || path.isAbsolute(normalized)) throw new Error(`Unsafe archive entry: ${entry}`);
-    if (forbidden.test(normalized) && !normalized.endsWith(".env.example")) throw new Error(`Forbidden archive entry: ${entry}`);
-    if (/\.(pem|p12|pfx)$/i.test(normalized)) throw new Error(`Private key material is not permitted: ${entry}`);
+    const portable = normalized.replaceAll("\\", "/");
+    if (portable.split("/").some((segment) => segment === "..") || path.posix.isAbsolute(portable) || path.win32.isAbsolute(entry)) throw new Error(`Unsafe archive entry: ${entry}`);
+    if (forbidden.test(portable) && !portable.endsWith(".env.example")) throw new Error(`Forbidden archive entry: ${entry}`);
+    if (/\.(pem|p12|pfx)$/i.test(portable)) throw new Error(`Private key material is not permitted: ${entry}`);
   }
 }
 
