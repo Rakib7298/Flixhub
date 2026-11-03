@@ -20,6 +20,16 @@ MediaMatrix does not include a content license. Connect only playlists, media so
 
 WordPress and Blogger are **presentation editions only**. They call read-only public discovery APIs on a separately deployed MediaMatrix application. They do not contain Next.js, PostgreSQL, Auth.js accounts, playlists, Jellyfin, or FFmpeg.
 
+## Project governance
+
+- [Repository audit](docs/PROJECT-AUDIT.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Implementation roadmap and review gates](docs/IMPLEMENTATION-ROADMAP.md)
+- [Technical decisions](docs/TECHNICAL-DECISIONS.md)
+- [Engineering guide](AGENTS.md)
+
+The current review covers Phase 0 (audit) and Phase 1 (foundation). Existing later-phase source is preserved, but new Phase 2 work requires explicit approval.
+
 ## Stack and repository layout
 
 ```text
