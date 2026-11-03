@@ -28,6 +28,7 @@
 - 7/7 deployment-configuration structural checks passed.
 - Production dependency audit reported no known vulnerabilities.
 - WordPress browser JavaScript passed Node syntax checking; Blogger XML and CMS contracts passed structural tests.
+- All five distribution artifacts generated from clean HEAD; independent archive/XML/ZIP validation and all five SHA-256 checks passed.
 
 See `release/verification.json` for commands/status and `docs/TESTING.md` for the external verification matrix.
 

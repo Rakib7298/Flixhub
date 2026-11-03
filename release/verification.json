@@ -2,7 +2,7 @@
   "application": "MediaMatrix",
   "version": "1.0.0",
   "releaseDate": "2026-11-03",
-  "generatedAt": "2026-11-03T10:44:23Z",
+  "generatedAt": "2026-11-03T10:46:07Z",
   "environment": {
     "node": "22.22.3",
     "pnpm": "9.15.9",
@@ -88,9 +88,9 @@
     },
     {
       "name": "distribution-export-validation",
-      "status": "unverified",
-      "command": "pnpm export:all && pnpm validate:export",
-      "evidence": "Awaiting clean-HEAD export execution."
+      "status": "passed",
+      "command": "pnpm export:all && pnpm validate:export && sha256sum -c SHA256SUMS.txt",
+      "evidence": "All five artifacts generated from clean HEAD in /tmp/mediamatrix-exports. Full/Vercel/Netlify archive entry validation, WordPress ZIP validation, Blogger XML validation, independent manifest validation, and all five SHA-256 checks passed."
     },
     {
       "name": "playwright-browser-install",
