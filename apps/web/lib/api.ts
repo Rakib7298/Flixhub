@@ -3,6 +3,7 @@ import type { ZodType } from "zod";
 import { auth } from "@/auth";
 import { db } from "@mediamatrix/database";
 import type { RoleName } from "@mediamatrix/database";
+import { logEvent, requestLogFields, withRequestId } from "@/lib/observability";
 
 export class ApiError extends Error {
   constructor(public readonly status: number, public readonly code: string, message: string, public readonly details?: unknown) {
@@ -70,18 +71,29 @@ export async function parseBody<T>(request: NextRequest, schema: ZodType<T>, max
   return parsed.data;
 }
 
-export function handleApiError(error: unknown): NextResponse {
+export function handleApiError(error: unknown, request: Request): NextResponse {
+  const fields = requestLogFields(request);
+  const respond = (body: unknown, status: number) => withRequestId(NextResponse.json(body, {
+    status,
+    headers: { "Cache-Control": "no-store" },
+  }), request, fields.requestId);
+
   if (error instanceof ApiError) {
-    return NextResponse.json({ error: { code: error.code, message: error.message, ...(error.details !== undefined ? { details: error.details } : {}) } }, { status: error.status, headers: { "Cache-Control": "no-store" } });
+    return respond({ error: { code: error.code, message: error.message, ...(error.details !== undefined ? { details: error.details } : {}) } }, error.status);
   }
   if (error && typeof error === "object" && "code" in error && error.code === "P2002") {
-    return NextResponse.json({ error: { code: "CONFLICT", message: "This record already exists." } }, { status: 409 });
+    return respond({ error: { code: "CONFLICT", message: "This record already exists." } }, 409);
   }
   if (error instanceof Error && /required|not configured/i.test(error.message)) {
-    return NextResponse.json({ error: { code: "NOT_CONFIGURED", message: error.message } }, { status: 503 });
+    return respond({ error: { code: "NOT_CONFIGURED", message: error.message } }, 503);
   }
-  console.error("Unhandled request error:", error instanceof Error ? error.name : "UnknownError");
-  return NextResponse.json({ error: { code: "INTERNAL_ERROR", message: "The request could not be completed." } }, { status: 500 });
+  logEvent("error", "request.unhandled_error", {
+    ...fields,
+    status: 500,
+    code: "INTERNAL_ERROR",
+    errorName: error instanceof Error ? error.name : "UnknownError",
+  });
+  return respond({ error: { code: "INTERNAL_ERROR", message: "The request could not be completed." } }, 500);
 }
 
 export function noStore(response: NextResponse): NextResponse {

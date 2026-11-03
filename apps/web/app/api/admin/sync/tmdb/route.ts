@@ -26,6 +26,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ jobId: job.id, status: "COMPLETED", synchronizedAt: new Date().toISOString() });
   } catch (error) {
     if (jobId) await db.backgroundJob.update({ where: { id: jobId }, data: { status: "FAILED", lastError: "Metadata synchronization failed" } }).catch(() => undefined);
-    return handleApiError(error);
+    return handleApiError(error, request);
   }
 }

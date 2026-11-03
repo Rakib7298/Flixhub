@@ -5,12 +5,12 @@ import { progressSchema } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireUser();
     const items = await db.playbackProgress.findMany({ where: { userId: user.id, duration: { gt: 0 } }, orderBy: { updatedAt: "desc" }, take: 20 });
     return NextResponse.json({ items: items.filter((item) => item.seconds / item.duration < 0.96) }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 export async function POST(request: NextRequest) {
@@ -28,5 +28,5 @@ export async function POST(request: NextRequest) {
       await db.watchHistory.create({ data: { userId: user.id, mediaKey: input.mediaKey, title: input.title } });
     }
     return NextResponse.json({ item });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

@@ -11,5 +11,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const headers = new Headers({ "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" });
     for (const name of ["content-type", "content-length", "content-range", "accept-ranges", "etag"]) { const value = upstream.headers.get(name); if (value) headers.set(name, value); }
     return new NextResponse(upstream.body, { status: upstream.status, headers });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

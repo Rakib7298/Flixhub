@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Clapperboard, Compass, LayoutDashboard, Radio, Search, UserRound, X } from "lucide-react";
 import { Logo, cn } from "@mediamatrix/ui";
@@ -21,6 +21,7 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const searchToggle = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -30,6 +31,12 @@ export function SiteHeader() {
   }, []);
 
   useEffect(() => setSearchOpen(false), [pathname]);
+
+  function closeSearch() {
+    if (!searchOpen) return;
+    setSearchOpen(false);
+    requestAnimationFrame(() => searchToggle.current?.focus());
+  }
 
   function submitSearch(event: FormEvent) {
     event.preventDefault();
@@ -50,10 +57,10 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
           <form onSubmit={submitSearch} className={cn("relative transition-all", searchOpen ? "absolute inset-x-4 top-3 z-10 sm:static sm:inset-auto" : "hidden sm:block")} role="search">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} className={cn("field rounded-full pl-10 pr-10", searchOpen ? "h-12 w-full sm:w-64" : "h-10 min-h-10 w-44 bg-black/25 lg:w-52 xl:w-60")} placeholder="Search titles…" aria-label="Search movies and TV" autoFocus={searchOpen} />
-            {searchOpen && <button type="button" onClick={() => setSearchOpen(false)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:text-white" aria-label="Close search"><X size={17} /></button>}
+            <input value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") closeSearch(); }} className={cn("field rounded-full pl-10 pr-10", searchOpen ? "h-12 w-full sm:w-64" : "h-10 min-h-10 w-44 bg-black/25 lg:w-52 xl:w-60")} placeholder="Search titles…" aria-label="Search movies and TV" autoFocus={searchOpen} />
+            {searchOpen && <button type="button" onClick={closeSearch} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-400 hover:text-white" aria-label="Close search"><X size={17} /></button>}
           </form>
-          {!searchOpen && <button onClick={() => setSearchOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-300 transition hover:bg-white/10 hover:text-white sm:hidden" aria-label="Open search"><Search size={19} /></button>}
+          {!searchOpen && <button ref={searchToggle} onClick={() => setSearchOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-full text-zinc-300 transition hover:bg-white/10 hover:text-white sm:hidden" aria-label="Open search"><Search size={19} /></button>}
           <Link href={session?.user ? "/account" : "/login"} className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[.07] px-2.5 text-xs font-semibold text-zinc-200 backdrop-blur-md transition hover:bg-white/[.12] sm:px-4" aria-label={session?.user ? "Your account" : "Sign in"}>
             <UserRound size={16} />
             <span className="hidden max-w-24 truncate sm:inline">{session?.user?.name || (session?.user ? "Account" : "Sign in")}</span>

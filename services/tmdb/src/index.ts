@@ -18,7 +18,8 @@ export class TmdbError extends Error {
 }
 
 interface CacheEntry { value: unknown; expiresAt: number }
-interface TmdbPage<T = Record<string, unknown>> { page?: number; total_pages?: number; total_results?: number; results?: T[] }
+type UnknownRecord = Record<string, unknown>;
+interface TmdbPage<T = UnknownRecord> { page?: number; total_pages?: number; total_results?: number; results?: T[] }
 
 export type SearchItem =
   | { kind: "media"; media: MediaSummary }
@@ -95,11 +96,13 @@ export class TmdbClient {
 
   async multiSearch(query: string, page = 1): Promise<Page<SearchItem>> {
     const data = await this.request<TmdbPage>("/search/multi", { query, page, include_adult: false }, 120_000);
-    const results = (data.results ?? []).flatMap((raw): SearchItem[] => {
+    const results = records(data.results).flatMap((raw): SearchItem[] => {
       if (raw.media_type === "person") {
-        return [{ kind: "person", person: { id: number(raw.id), name: string(raw.name), profilePath: nullableString(raw.profile_path), knownForDepartment: nullableString(raw.known_for_department) } }];
+        const person = { id: number(raw.id), name: string(raw.name), profilePath: nullableString(raw.profile_path), knownForDepartment: nullableString(raw.known_for_department) };
+        return person.id && person.name ? [{ kind: "person", person }] : [];
       }
-      const media = normalizeMedia(raw, raw.media_type === "tv" ? "tv" : "movie");
+      if (raw.media_type !== "movie" && raw.media_type !== "tv") return [];
+      const media = normalizeMedia(raw, raw.media_type);
       return media ? [{ kind: "media", media }] : [];
     });
     return normalizePage(data, results);
@@ -107,7 +110,7 @@ export class TmdbClient {
 
   async movie(id: number): Promise<MovieDetails> {
     positiveId(id);
-    const raw = await this.request<Record<string, any>>(`/movie/${id}`, { append_to_response: "credits,videos,recommendations,similar" }, 600_000);
+    const raw = await this.request<UnknownRecord>(`/movie/${id}`, { append_to_response: "credits,videos,recommendations,similar" }, 600_000);
     const base = normalizeMedia(raw, "movie");
     if (!base) throw new TmdbError("TMDB returned an invalid movie record.", 502, "INVALID_UPSTREAM_DATA");
     return {
@@ -117,18 +120,18 @@ export class TmdbClient {
       genres: normalizeGenres(raw.genres),
       tagline: string(raw.tagline),
       status: string(raw.status),
-      productionCompanies: array(raw.production_companies).map((company) => string(company.name)).filter(Boolean),
-      cast: normalizeCredits(raw.credits?.cast, "cast"),
-      crew: normalizeCredits(raw.credits?.crew, "crew"),
-      videos: normalizeVideos(raw.videos?.results),
-      recommendations: normalizeMediaList(raw.recommendations?.results, "movie"),
-      similar: normalizeMediaList(raw.similar?.results, "movie"),
+      productionCompanies: records(raw.production_companies).map((company) => string(company.name)).filter(Boolean),
+      cast: normalizeCredits(record(raw.credits).cast, "cast"),
+      crew: normalizeCredits(record(raw.credits).crew, "crew"),
+      videos: normalizeVideos(record(raw.videos).results),
+      recommendations: normalizeMediaList(record(raw.recommendations).results, "movie"),
+      similar: normalizeMediaList(record(raw.similar).results, "movie"),
     };
   }
 
   async tv(id: number): Promise<TvDetails> {
     positiveId(id);
-    const raw = await this.request<Record<string, any>>(`/tv/${id}`, { append_to_response: "credits,videos,recommendations,similar" }, 600_000);
+    const raw = await this.request<UnknownRecord>(`/tv/${id}`, { append_to_response: "credits,videos,recommendations,similar" }, 600_000);
     const base = normalizeMedia(raw, "tv");
     if (!base) throw new TmdbError("TMDB returned an invalid TV record.", 502, "INVALID_UPSTREAM_DATA");
     return {
@@ -140,21 +143,22 @@ export class TmdbClient {
       numberOfSeasons: number(raw.number_of_seasons),
       numberOfEpisodes: number(raw.number_of_episodes),
       episodeRunTime: array(raw.episode_run_time).map((value) => number(value)),
-      cast: normalizeCredits(raw.credits?.cast, "cast"),
-      crew: normalizeCredits(raw.credits?.crew, "crew"),
-      videos: normalizeVideos(raw.videos?.results),
-      seasons: array(raw.seasons).map(normalizeSeason),
-      recommendations: normalizeMediaList(raw.recommendations?.results, "tv"),
-      similar: normalizeMediaList(raw.similar?.results, "tv"),
+      cast: normalizeCredits(record(raw.credits).cast, "cast"),
+      crew: normalizeCredits(record(raw.credits).crew, "crew"),
+      videos: normalizeVideos(record(raw.videos).results),
+      seasons: records(raw.seasons).map(normalizeSeason),
+      recommendations: normalizeMediaList(record(raw.recommendations).results, "tv"),
+      similar: normalizeMediaList(record(raw.similar).results, "tv"),
     };
   }
 
   async season(tvId: number, seasonNumber: number): Promise<Season> {
     positiveId(tvId);
     if (!Number.isInteger(seasonNumber) || seasonNumber < 0) throw new TmdbError("Invalid season number.", 400, "INVALID_PARAMETER");
-    const raw = await this.request<Record<string, any>>(`/tv/${tvId}/season/${seasonNumber}`, {}, 600_000);
+    const raw = await this.request<UnknownRecord>(`/tv/${tvId}/season/${seasonNumber}`, {}, 600_000);
     const season = normalizeSeason(raw);
-    season.episodes = array(raw.episodes).map((episode) => ({
+    if (!season.id) throw new TmdbError("TMDB returned an invalid season record.", 502, "INVALID_UPSTREAM_DATA");
+    season.episodes = records(raw.episodes).map((episode) => ({
       id: number(episode.id), name: string(episode.name), overview: string(episode.overview),
       episodeNumber: number(episode.episode_number), seasonNumber: number(episode.season_number),
       airDate: nullableString(episode.air_date), runtime: nullableNumber(episode.runtime),
@@ -164,18 +168,21 @@ export class TmdbClient {
   }
 
   async genres(type: MediaType): Promise<Genre[]> {
-    const data = await this.request<{ genres?: Array<{ id: number; name: string }> }>(`/genre/${type}/list`, {}, 86_400_000);
-    return (data.genres ?? []).map((genre) => ({ id: genre.id, name: genre.name }));
+    const data = await this.request<UnknownRecord>(`/genre/${type}/list`, {}, 86_400_000);
+    return normalizeGenres(data.genres);
   }
 
   async person(id: number): Promise<PersonDetails> {
     positiveId(id);
-    const raw = await this.request<Record<string, any>>(`/person/${id}`, { append_to_response: "combined_credits" }, 600_000);
+    const raw = await this.request<UnknownRecord>(`/person/${id}`, { append_to_response: "combined_credits" }, 600_000);
+    const personId = number(raw.id);
+    const name = string(raw.name);
+    if (!personId || !name) throw new TmdbError("TMDB returned an invalid person record.", 502, "INVALID_UPSTREAM_DATA");
     return {
-      id: number(raw.id), name: string(raw.name), biography: string(raw.biography),
+      id: personId, name, biography: string(raw.biography),
       birthday: nullableString(raw.birthday), deathday: nullableString(raw.deathday),
       placeOfBirth: nullableString(raw.place_of_birth), profilePath: nullableString(raw.profile_path),
-      knownFor: normalizeMediaList(raw.combined_credits?.cast).sort((a, b) => b.popularity - a.popularity).slice(0, 20),
+      knownFor: normalizeMediaList(record(raw.combined_credits).cast).sort((a, b) => b.popularity - a.popularity).slice(0, 20),
     };
   }
 
@@ -217,9 +224,12 @@ export class TmdbClient {
             if (response.status === 401 || response.status === 403) throw new TmdbError("TMDB rejected the configured credentials.", 502, "TMDB_AUTH_FAILED");
             throw new TmdbError(`TMDB request failed (${response.status}).`, 502, "TMDB_UPSTREAM_ERROR");
           }
-          const data = await response.json() as T;
+          const data = await response.json() as unknown;
+          if (!data || typeof data !== "object" || Array.isArray(data)) {
+            throw new TmdbError("TMDB returned an invalid response.", 502, "INVALID_UPSTREAM_DATA");
+          }
           this.cache.set(cacheKey, { value: data, expiresAt: Date.now() + ttl });
-          return data;
+          return data as T;
         } catch (error) {
           lastError = error;
           if (error instanceof TmdbError) throw error;
@@ -247,13 +257,14 @@ export class TmdbClient {
   }
 }
 
-export function normalizeMedia(raw: Record<string, any>, typeHint?: MediaType): MediaSummary | null {
+export function normalizeMedia(raw: UnknownRecord, typeHint?: MediaType): MediaSummary | null {
   const id = number(raw.id);
-  if (!id) return null;
   const type: MediaType = raw.media_type === "tv" || typeHint === "tv" ? "tv" : "movie";
+  const title = string(type === "movie" ? raw.title || raw.name : raw.name || raw.title);
+  if (!id || !title) return null;
   return {
     id, type,
-    title: string(type === "movie" ? raw.title || raw.name : raw.name || raw.title),
+    title,
     originalTitle: string(type === "movie" ? raw.original_title || raw.original_name : raw.original_name || raw.original_title),
     overview: string(raw.overview), posterPath: nullableString(raw.poster_path), backdropPath: nullableString(raw.backdrop_path),
     releaseDate: nullableString(type === "movie" ? raw.release_date : raw.first_air_date),
@@ -264,37 +275,48 @@ export function normalizeMedia(raw: Record<string, any>, typeHint?: MediaType): 
 }
 
 export function normalizeMediaList(raw: unknown, typeHint?: MediaType): MediaSummary[] {
-  return array(raw).flatMap((item) => {
+  return records(raw).flatMap((item) => {
     const normalized = normalizeMedia(item, typeHint ?? (item.media_type === "tv" ? "tv" : item.media_type === "movie" ? "movie" : undefined));
     return normalized ? [normalized] : [];
   });
 }
 
 function normalizePage<T>(data: TmdbPage, results: T[]): Page<T> {
-  return { page: number(data.page) || 1, totalPages: Math.min(number(data.total_pages), 500), totalResults: number(data.total_results), results };
+  return {
+    page: Math.max(1, number(data.page) || 1),
+    totalPages: Math.max(0, Math.min(number(data.total_pages), 500)),
+    totalResults: Math.max(0, number(data.total_results)),
+    results,
+  };
 }
 
-function normalizeGenres(raw: unknown): Genre[] { return array(raw).map((genre) => ({ id: number(genre.id), name: string(genre.name) })).filter((genre) => genre.id && genre.name); }
+function normalizeGenres(raw: unknown): Genre[] { return records(raw).map((genre) => ({ id: number(genre.id), name: string(genre.name) })).filter((genre) => genre.id && genre.name); }
 function normalizeCredits(raw: unknown, kind: "cast" | "crew"): PersonCredit[] {
-  return array(raw).slice(0, kind === "cast" ? 24 : 40).flatMap((credit) => {
+  return records(raw).slice(0, kind === "cast" ? 24 : 40).flatMap((credit) => {
     const base = { id: number(credit.id), name: string(credit.name), profilePath: nullableString(credit.profile_path) };
     if (!base.id || !base.name) return [];
     return [kind === "cast" ? { ...base, character: string(credit.character) } : { ...base, job: string(credit.job) }];
   });
 }
 function normalizeVideos(raw: unknown) {
-  return array(raw).map((video) => ({ id: string(video.id), key: string(video.key), name: string(video.name), site: string(video.site), type: string(video.type), official: Boolean(video.official) })).filter((video) => video.id && video.key);
+  return records(raw).map((video) => ({ id: string(video.id), key: string(video.key), name: string(video.name), site: string(video.site), type: string(video.type), official: Boolean(video.official) })).filter((video) => video.id && video.key);
 }
-function normalizeSeason(raw: Record<string, any>): Season {
-  return { id: number(raw.id), name: string(raw.name), overview: string(raw.overview), seasonNumber: number(raw.season_number), episodeCount: number(raw.episode_count ?? raw.episodes?.length), airDate: nullableString(raw.air_date), posterPath: nullableString(raw.poster_path) };
+function normalizeSeason(raw: UnknownRecord): Season {
+  return { id: number(raw.id), name: string(raw.name), overview: string(raw.overview), seasonNumber: number(raw.season_number), episodeCount: number(raw.episode_count ?? (Array.isArray(raw.episodes) ? raw.episodes.length : undefined)), airDate: nullableString(raw.air_date), posterPath: nullableString(raw.poster_path) };
 }
 function positiveId(id: number) { if (!Number.isInteger(id) || id < 1) throw new TmdbError("Invalid TMDB identifier.", 400, "INVALID_PARAMETER"); }
 function retryDelay(response: Response, attempt: number) { const retryAfter = Number(response.headers.get("retry-after")); return Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 2000) : 200 * 2 ** attempt; }
 function delay(ms: number) { return new Promise((resolve) => setTimeout(resolve, ms)); }
-function array(raw: unknown): Record<string, any>[] { return Array.isArray(raw) ? raw.filter((item) => item && typeof item === "object") : []; }
+function array(raw: unknown): unknown[] { return Array.isArray(raw) ? raw : []; }
+function records(raw: unknown): UnknownRecord[] { return array(raw).filter((item): item is UnknownRecord => Boolean(item) && typeof item === "object" && !Array.isArray(item)); }
+function record(raw: unknown): UnknownRecord { return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as UnknownRecord : {}; }
 function string(value: unknown): string { return typeof value === "string" ? value : ""; }
 function nullableString(value: unknown): string | null { return typeof value === "string" && value ? value : null; }
-function number(value: unknown): number { const parsed = typeof value === "number" ? value : Number(value); return Number.isFinite(parsed) ? parsed : 0; }
+function number(value: unknown): number {
+  if (typeof value !== "number" && (typeof value !== "string" || !value.trim())) return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 function nullableNumber(value: unknown): number | null { return typeof value === "number" && Number.isFinite(value) ? value : null; }
 
 export { persistMovieMetadata, persistTvMetadata } from "./persistence";

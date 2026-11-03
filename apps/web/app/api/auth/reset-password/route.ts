@@ -24,5 +24,5 @@ export async function POST(request: NextRequest) {
       await tx.auditLog.create({ data: { actorId: record.userId, action: "account.password_reset", entity: "User", entityId: record.userId, metadata: {} } });
     });
     return NextResponse.json({ message: "Password updated. Sign in with your new password." });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

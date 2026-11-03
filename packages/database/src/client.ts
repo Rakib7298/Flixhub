@@ -7,7 +7,8 @@ function createClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL is required to use PostgreSQL.");
   const adapter = new PrismaPg({ connectionString });
-  return new PrismaClient({ adapter, log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"] });
+  // Raw Prisma log messages can include query inputs. Application boundaries emit sanitized errors instead.
+  return new PrismaClient({ adapter });
 }
 
 function client(): PrismaClient {

@@ -26,9 +26,10 @@ WordPress and Blogger are **presentation editions only**. They call read-only pu
 - [Architecture](docs/ARCHITECTURE.md)
 - [Implementation roadmap and review gates](docs/IMPLEMENTATION-ROADMAP.md)
 - [Technical decisions](docs/TECHNICAL-DECISIONS.md)
+- [Phase 2 implementation plan](docs/PHASE-2-PLAN.md)
 - [Engineering guide](AGENTS.md)
 
-The current review covers Phase 0 (audit) and Phase 1 (foundation). Existing later-phase source is preserved, but new Phase 2 work requires explicit approval.
+Phase 0 (audit) and Phase 1 (foundation) are complete. Phase 2 (core validation and discovery) is explicitly approved; later-phase work still requires new owner instruction.
 
 ## Stack and repository layout
 
@@ -64,7 +65,7 @@ The application is a modular monolith. The transcoder and schedulers are separat
 - TMDB API read access token or API key for real discovery
 - Optional: FFmpeg 7+ on the transcoder worker, Git, and tar for exports
 
-Docker is optional. Docker, PostgreSQL, FFmpeg, and third-party credentials are not vendored.
+Docker is optional. Docker, PostgreSQL, FFmpeg, and third-party credentials are not vendored. Automated tests use a development-only embedded PostgreSQL 17 package for disposable database acceptance; it is not production infrastructure.
 
 ## Local setup
 
@@ -176,6 +177,7 @@ Set `SMTP_URL` and `EMAIL_FROM`. Without SMTP, recovery reports that delivery is
 pnpm lint
 pnpm -r --no-bail --if-present typecheck
 pnpm test
+pnpm test:integration
 pnpm test:security
 pnpm build
 pnpm audit --prod --audit-level=high
@@ -189,7 +191,7 @@ pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-The Playwright suite uses the real application without catalog credentials and checks honest empty states, public API behavior, security headers, and mobile navigation. Database-backed and third-party end-to-end tests require their own configured test environment.
+The Playwright suite uses the real application without catalog credentials and checks honest states, API correlation/security headers, discovery loading/empty/error behavior, keyboard/focus/reduced-motion accessibility, filters, mobile navigation, and overflow. Browser-injected suggestion fixtures are test-only. Real PostgreSQL acceptance runs separately in Vitest; live TMDB checks require their own explicitly authorized environment.
 
 See `docs/TESTING.md` and `release/verification.json` for executed evidence and skipped/unverified checks.
 

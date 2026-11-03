@@ -31,5 +31,5 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return [{ id: item.id, channelKey: item.channelKey, name: item.name, url, logo: item.logoUrl, group: item.groupName, tvgId: item.tvgId }];
     });
     return NextResponse.json({ items, groups: groupRecords.map((item) => item.groupName), page, totalPages: Math.max(1, Math.ceil(total / take)), total }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

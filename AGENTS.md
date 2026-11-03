@@ -2,8 +2,8 @@
 
 ## Scope and review gates
 
-- The active assignment is Phase 0/Phase 1. **Do not begin Phase 2 without explicit human approval.**
-- Preserve working features. The repository already contains later-phase modules; their presence is not permission to rewrite or extend them during the foundation review.
+- The active assignment is Phase 2 (core validation and discovery). **Do not begin later phases without new explicit human approval.**
+- Preserve working features. The repository already contains later-phase modules; their presence is not permission to rewrite or extend them during this review.
 - Do not deploy to production, apply destructive migrations, seed real environments, or configure live paid services without explicit approval.
 - Keep changes scoped and use focused commits. Do not commit generated builds, dependencies, exports, database dumps, or secrets.
 
@@ -36,6 +36,7 @@ pnpm db:generate
 pnpm -r --no-bail --if-present typecheck
 pnpm lint
 pnpm test:unit
+pnpm test:integration
 pnpm test
 pnpm build
 pnpm validate:config
@@ -45,6 +46,8 @@ git diff --check
 
 When a sandbox cannot download Prisma native engines, record the exact limitation. Never substitute a dummy executable for a migration diff or claim that an authored migration was generated/executed when it was not.
 
+`pnpm test:integration` uses a disposable PostgreSQL 17 cluster and direct migration-SQL mode by default. `MEDIAMATRIX_TEST_MIGRATION=prisma pnpm test:integration` runs the real CLI migration path and must never use a dummy engine. Live TMDB additionally requires authorized credentials and `MEDIAMATRIX_LIVE_TMDB=1`.
+
 Browser tests additionally require Chromium and a built/startable application. Report skipped tests separately from passed tests.
 
 ## Coding conventions
@@ -52,6 +55,7 @@ Browser tests additionally require Chromium and a built/startable application. R
 - Use strict TypeScript and existing package aliases. Validate external input with Zod at trust boundaries.
 - Keep server-only credentials out of `NEXT_PUBLIC_` variables, client components, public responses and logs.
 - Preserve normalized `ApiError` responses and honest empty/error states.
+- Route API errors through the request-aware handlers and use the shared JSON log schema; do not log raw ORM/provider errors, query strings or request bodies.
 - Reuse `packages/ui` primitives where appropriate; do not move application-specific components prematurely.
 - Avoid new dependencies, especially paid services, unless a requirement justifies them and the decision is recorded.
 - Do not weaken lint/security rules to make a change pass. Narrow existing relaxed rules only through a reviewed maintenance change.
@@ -61,7 +65,7 @@ Browser tests additionally require Chromium and a built/startable application. R
 
 - Review `packages/database/prisma/schema.prisma` and the migration before any database operation.
 - Never run `db:migrate`, `db:deploy`, or `db:seed` against a real/shared database without explicit operator approval and a backup where applicable.
-- The current initial migration is manually authored and structurally tested; runtime application remains an external acceptance step.
+- The initial migration is manually authored and executed against disposable PostgreSQL in Phase 2 tests. Shared/production migration remains a separate operator-approved acceptance step.
 - Use least-privilege, non-production credentials for integration tests and never print connection strings.
 
 ## Security and privacy

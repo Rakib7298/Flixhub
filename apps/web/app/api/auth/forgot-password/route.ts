@@ -37,5 +37,5 @@ export async function POST(request: NextRequest) {
       }
     }
     return NextResponse.json({ message: "If an active account matches that email, recovery instructions have been requested." }, { status: 202 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTmdbClient } from "@/lib/tmdb";
 import { rateLimit } from "@/lib/rate-limit";
+import { logEvent, requestLogFields, withRequestId } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,8 @@ export async function GET(request: NextRequest) {
     const result = await client.multiSearch(query);
     return NextResponse.json({ results: result.results.slice(0, 8) }, { headers: { "Cache-Control": "private, max-age=60" } });
   } catch {
-    return NextResponse.json({ error: { code: "UPSTREAM_UNAVAILABLE", message: "Search suggestions are temporarily unavailable." } }, { status: 503 });
+    const fields = requestLogFields(request);
+    logEvent("warn", "search.suggestions_unavailable", { ...fields, status: 503, code: "UPSTREAM_UNAVAILABLE" });
+    return withRequestId(NextResponse.json({ error: { code: "UPSTREAM_UNAVAILABLE", message: "Search suggestions are temporarily unavailable." } }, { status: 503 }), request, fields.requestId);
   }
 }

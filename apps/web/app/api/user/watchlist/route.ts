@@ -6,12 +6,12 @@ import { getTmdbClient } from "@/lib/tmdb";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireUser();
     const items = await db.watchlist.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 200 });
     return NextResponse.json({ items }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 export async function POST(request: NextRequest) {
@@ -39,5 +39,5 @@ export async function POST(request: NextRequest) {
       create: { userId: user.id, mediaKey, mediaType: input.mediaType, tmdbId: input.tmdbId, title, posterPath },
     });
     return NextResponse.json({ saved: true, item }, { status: 201 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

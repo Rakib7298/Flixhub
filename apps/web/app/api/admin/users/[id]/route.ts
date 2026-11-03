@@ -15,5 +15,5 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const updated = await db.user.update({ where: { id }, data: { ...(input.role ? { roleName } : {}), ...(input.active === undefined ? {} : { deletedAt: input.active ? null : new Date(), ...(input.active ? {} : { sessionVersion: { increment: 1 } }) }) }, include: { role: true } });
     await db.auditLog.create({ data: { actorId: admin.id, action: "admin.user_updated", entity: "User", entityId: id, metadata: { role: input.role, active: input.active } } });
     return NextResponse.json({ user: { id: updated.id, role: updated.role.name, active: !updated.deletedAt } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

@@ -14,5 +14,5 @@ export async function POST(request: NextRequest) {
     const input = await parseBody(request, z.object({ playlistId: z.string().cuid() }).strict());
     const result = await refreshPlaylistRecord(input.playlistId, null);
     return NextResponse.json(result);
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

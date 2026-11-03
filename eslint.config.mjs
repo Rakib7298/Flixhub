@@ -35,13 +35,24 @@ export default [
       ...reactHooks.configs.recommended.rules,
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs["core-web-vitals"].rules,
-      // App Router server data fetching and promise-driven client synchronization use these patterns safely.
-      "react-hooks/error-boundaries": "off",
-      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/error-boundaries": "error",
+      "react-hooks/set-state-in-effect": "error",
       "no-undef": "off",
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     },
+  },
+  {
+    // Legacy external-system synchronization remains scoped here; new code must not disable the rule globally.
+    files: [
+      "apps/web/components/export-manager.tsx",
+      "apps/web/components/live-tv-dashboard.tsx",
+      "apps/web/components/playlist-manager.tsx",
+      "apps/web/components/site-header.tsx",
+      "apps/web/components/transcoding-manager.tsx",
+      "apps/web/components/video-player.tsx",
+    ],
+    rules: { "react-hooks/set-state-in-effect": "off" },
   },
   {
     files: ["**/*.{js,mjs,cjs}"],

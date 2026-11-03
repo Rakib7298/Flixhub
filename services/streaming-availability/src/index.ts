@@ -89,18 +89,19 @@ export function normalizeStreamingOffers(raw: unknown, country: string): Streami
   const supportedTypes = new Set<OfferType>(["subscription", "free", "rent", "buy"]);
   return matching.flatMap((candidate): StreamingOffer[] => {
     if (!candidate || typeof candidate !== "object") return [];
-    const option = candidate as Record<string, any>;
-    if (!supportedTypes.has(option.type)) return [];
-    const service = option.service;
-    if (!service || typeof service !== "object" || !string(service.id) || !string(service.name)) return [];
+    const option = candidate as Record<string, unknown>;
+    if (typeof option.type !== "string" || !supportedTypes.has(option.type as OfferType)) return [];
+    const service = option.service && typeof option.service === "object" && !Array.isArray(option.service) ? option.service as Record<string, unknown> : null;
+    if (!service || !string(service.id) || !string(service.name)) return [];
     const url = officialUrl(option.link);
-    const logo = officialUrl(service.imageSet?.darkThemeImage) ?? officialUrl(service.imageSet?.lightThemeImage);
+    const imageSet = service.imageSet && typeof service.imageSet === "object" && !Array.isArray(service.imageSet) ? service.imageSet as Record<string, unknown> : {};
+    const logo = officialUrl(imageSet.darkThemeImage) ?? officialUrl(imageSet.lightThemeImage);
     return [{
       providerId: string(service.id), providerName: string(service.name), providerLogo: logo,
       type: option.type as OfferType, url, quality: nullableString(option.quality), lastVerifiedAt: verifiedAt,
       ...(typeof option.availableSince === "number" ? { availableSince: option.availableSince } : {}),
       ...(typeof option.expiresOn === "number" ? { expiresOn: option.expiresOn } : {}),
-      ...(option.price && typeof option.price === "object" ? { price: [option.price.amount, option.price.currency].filter((value) => value !== undefined && value !== null).join(" ") } : {}),
+      ...(option.price && typeof option.price === "object" && !Array.isArray(option.price) ? { price: [(option.price as Record<string, unknown>).amount, (option.price as Record<string, unknown>).currency].filter((value) => value !== undefined && value !== null).join(" ") } : {}),
     }];
   });
 }

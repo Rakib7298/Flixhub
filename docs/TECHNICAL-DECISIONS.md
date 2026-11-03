@@ -1,6 +1,6 @@
 # Technical decisions
 
-These decisions describe the current foundation and its consequences. They are records of existing choices, not permission to expand into Phase 2.
+These decisions describe the current architecture and its consequences. They are records of reviewed choices, not permission to expand into later phases.
 
 ## TD-001 — Modular monolith with a pnpm workspace
 
@@ -24,15 +24,15 @@ These decisions describe the current foundation and its consequences. They are r
 **Decision:** Share strict compiler settings, `noUncheckedIndexedAccess`, bundler resolution and no-emit package checks.
 
 **Why:** Shared contracts catch integration drift across web, services and workers.
-**Consequences:** Generated Prisma types are required before some checks. Relaxed ESLint rules remain documented debt and should not be expanded casually.
+**Consequences:** Generated Prisma types are required before some checks. `no-explicit-any` and `error-boundaries` are enforced globally; only six named legacy components retain a scoped `set-state-in-effect` exception.
 
 ## TD-004 — PostgreSQL with Prisma 7 driver adapter
 
-**Status:** Accepted, runtime acceptance pending
+**Status:** Accepted; disposable runtime acceptance implemented, shared/production acceptance pending
 **Decision:** Use PostgreSQL, Prisma schema/client, the PostgreSQL driver adapter, transactions and a lazy singleton client.
 
 **Why:** PostgreSQL fits relational identity/library/catalog data; lazy initialization lets unconfigured public pages build without opening a connection.
-**Consequences:** `DATABASE_URL` is required for database features. The initial SQL migration is manually authored and must be reviewed/applied only in an approved environment. No destructive migration is authorized by Phase 1.
+**Consequences:** `DATABASE_URL` is required for database features. The initial SQL migration is manually authored and must be reviewed/applied only in an approved environment. Phase 2 authorizes disposable test clusters, not destructive or shared/production migration.
 
 ## TD-005 — Zod environment validation with honest optional capabilities
 
@@ -50,13 +50,13 @@ These decisions describe the current foundation and its consequences. They are r
 **Why:** Consistency and accessibility foundations without a paid component dependency.
 **Consequences:** Complex application components remain in `apps/web/components`; generic primitives should move to `packages/ui` only when reuse is real.
 
-## TD-007 — Normalized errors and basic non-sensitive logging
+## TD-007 — Normalized errors and correlated structured logging
 
-**Status:** Accepted for Phase 1
-**Decision:** Use typed API errors, safe JSON responses, UI error boundaries, and leveled `console` logging at process boundaries. Log error names/statuses or sanitized messages, not secrets/request bodies.
+**Status:** Accepted
+**Decision:** Use typed API errors, safe JSON responses, UI error boundaries, validated request IDs, and a shared JSON log schema with allowlisted non-sensitive fields. Disable raw Prisma query logging that could bypass the schema.
 
-**Why:** This provides operability without adding a logging service or unnecessary dependency.
-**Consequences:** Structured logs, correlation IDs and central drains are future production-hardening work.
+**Why:** This provides operability and request correlation without adding a logging service or exposing credentials, query strings, bodies, or provider details.
+**Consequences:** Central drains, metrics/tracing and worker-wide correlation remain future production-hardening work.
 
 ## TD-008 — Vitest, Playwright and CI quality gates
 
@@ -64,7 +64,7 @@ These decisions describe the current foundation and its consequences. They are r
 **Decision:** Use Vitest for unit/integration/security checks, Playwright for real browser/public-app checks, and GitHub Actions for frozen-install/build/browser/container/export validation.
 
 **Why:** Fast deterministic tests cover contracts; browser and clean-checkout CI catch different failure modes.
-**Consequences:** Mocked providers are test fixtures only. A passing browser job does not prove real media playback, database migration, or third-party connectivity.
+**Consequences:** Mocked providers are test fixtures only. A passing browser job does not prove real media playback or third-party connectivity; disposable migration acceptance does not prove shared/production migration.
 
 ## TD-009 — Optional Docker development dependencies
 
@@ -97,3 +97,11 @@ These decisions describe the current foundation and its consequences. They are r
 
 **Why:** Repository validation and external state changes have different risk profiles.
 **Consequences:** CI may build and test artifacts, but it does not approve production deployment or external provider acceptance.
+
+## TD-013 — Embedded PostgreSQL only for disposable acceptance
+
+**Status:** Accepted
+**Decision:** Use a pinned development-only `embedded-postgres` PostgreSQL 17 package for migration/seed/auth/library tests. Keep direct SQL and real Prisma CLI migration modes explicit.
+
+**Why:** Real database behavior can be tested without Docker, shared credentials, paid infrastructure, or relabeling mocks as database acceptance.
+**Consequences:** The dependency downloads platform binaries during development installation and is excluded from production dependencies. Temporary clusters are removed after tests; native Prisma CLI acceptance still requires its schema engine.

@@ -17,11 +17,16 @@ export default async function MoviesPage({ searchParams }: { searchParams: Searc
   const page = integer(params.page, 1);
   const client = getTmdbClient();
   if (!client) return <CatalogShell title="Movies" eyebrow="Explore cinema" description="From new releases to timeless essentials, find something worth your time." current={current} genres={[]}><ConfigurationNotice /></CatalogShell>;
+  const data = await loadCatalog(client, current, page);
+  return <CatalogShell title="Movies" eyebrow="Explore cinema" description="From new releases to timeless essentials, find something worth your time." current={current} genres={data?.genres ?? []}>{data ? <><p className="mb-5 text-xs text-zinc-500">{data.result.totalResults.toLocaleString()} titles from TMDB</p><MediaGrid items={data.result.results} /><Pagination page={data.result.page} totalPages={data.result.totalPages} pathname="/movies" query={{ ...current, sort: current.sortBy }} /></> : <ErrorState description="The movie catalog is temporarily unavailable. Please try again shortly." />}</CatalogShell>;
+}
+
+async function loadCatalog(client: NonNullable<ReturnType<typeof getTmdbClient>>, current: { genre?: number; year?: number; minRating?: number; sortBy?: string }, page: number) {
   try {
     const [result, genres] = await Promise.all([client.discover("movie", { page, ...current }), client.genres("movie")]);
-    return <CatalogShell title="Movies" eyebrow="Explore cinema" description="From new releases to timeless essentials, find something worth your time." current={current} genres={genres}><p className="mb-5 text-xs text-zinc-500">{result.totalResults.toLocaleString()} titles from TMDB</p><MediaGrid items={result.results} /><Pagination page={result.page} totalPages={result.totalPages} pathname="/movies" query={{ ...current, sort: current.sortBy }} /></CatalogShell>;
+    return { result, genres };
   } catch {
-    return <CatalogShell title="Movies" eyebrow="Explore cinema" description="From new releases to timeless essentials, find something worth your time." current={current} genres={[]}><ErrorState description="The movie catalog is temporarily unavailable. Please try again shortly." /></CatalogShell>;
+    return null;
   }
 }
 

@@ -23,5 +23,5 @@ export async function POST(request: NextRequest) {
       return created;
     });
     return NextResponse.json({ user }, { status: 201 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

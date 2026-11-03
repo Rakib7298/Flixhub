@@ -15,7 +15,7 @@ const playlistSchema = z.discriminatedUnion("sourceType", [
   z.object({ ...base, sourceType: z.literal("GITHUB"), repository: z.string().max(150), branch: z.string().max(200), path: z.string().max(400) }).strict(),
 ]);
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireUser();
     const items = await db.playlist.findMany({
@@ -24,7 +24,7 @@ export async function GET() {
       select: { id: true, ownerId: true, name: true, sourceType: true, isPublic: true, enabled: true, status: true, refreshMinutes: true, lastSyncAt: true, lastError: true, githubRepository: true, githubBranch: true, githubFilePath: true, _count: { select: { items: { where: { isActive: true } } } } },
     });
     return NextResponse.json({ items: items.map(({ _count, ...item }) => ({ ...item, itemCount: _count.items, isOwner: item.ownerId === user.id })) }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 export async function POST(request: NextRequest) {
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     } catch (error) { await db.playlist.delete({ where: { id: playlist.id } }).catch(() => undefined); throw error; }
     await db.auditLog.create({ data: { actorId: user.id, action: "playlist.created", entity: "Playlist", entityId: playlist.id, metadata: { sourceType: input.sourceType, itemCount: parsed.channels.length } } });
     return NextResponse.json({ playlist: { id: playlist.id, name: playlist.name, itemCount: parsed.channels.length }, duplicateCount: parsed.duplicateCount, issues: parsed.issues }, { status: 201 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 async function createUpload(request: NextRequest, user: Awaited<ReturnType<typeof requireUser>>) {

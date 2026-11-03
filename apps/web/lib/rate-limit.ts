@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logEvent, requestLogFields, withRequestId } from "@/lib/observability";
 
 interface Bucket { count: number; resetAt: number }
 const globalLimiter = globalThis as unknown as { rateLimitBuckets?: Map<string, Bucket> };
@@ -20,7 +21,9 @@ export function rateLimit(request: NextRequest, scope: string, options: { limit:
   buckets.set(key, bucket);
   if (bucket.count <= options.limit) return null;
   const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
-  return NextResponse.json({ error: { code: "RATE_LIMITED", message: "Too many requests. Please try again later." } }, { status: 429, headers: { "Retry-After": String(retryAfter), "Cache-Control": "no-store" } });
+  const fields = requestLogFields(request);
+  logEvent("warn", "rate_limit.exceeded", { ...fields, status: 429, code: "RATE_LIMITED", scope });
+  return withRequestId(NextResponse.json({ error: { code: "RATE_LIMITED", message: "Too many requests. Please try again later." } }, { status: 429, headers: { "Retry-After": String(retryAfter), "Cache-Control": "no-store" } }), request, fields.requestId);
 }
 
 export function resetRateLimitsForTests() { buckets.clear(); }

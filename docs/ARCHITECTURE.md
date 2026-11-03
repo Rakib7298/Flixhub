@@ -22,7 +22,7 @@ This is not a microservice fleet. Normal discovery, account and administration f
 | Domain/shared contracts | Media types, offers, display helpers, playback source handling | `packages/shared`, `packages/media-engine` |
 | Persistence | Prisma schema/client, PostgreSQL adapter, transactions, migration and seed | `packages/database` |
 | Integration | Real TMDB/availability/GitHub/Jellyfin/playlist/transcoder adapters | `services` |
-| Operations | Health, basic logging, workers, containers, CI, exports and evidence | `apps/web/app/api/health`, `workers`, `infrastructure`, `.github`, `scripts` |
+| Operations | Health, correlated structured logging, workers, containers, CI, exports and evidence | `apps/web/app/api/health`, `workers`, `infrastructure`, `.github`, `scripts` |
 
 ### Dependency direction
 
@@ -48,12 +48,13 @@ Shared packages must not import application pages or route handlers. Browser-saf
 
 ## 4. Request and error flow
 
-1. Public server components call server-side integration clients; browser mutations use the API client/route handlers.
-2. Mutating APIs apply origin/Fetch-Site checks, rate limits where configured, streamed byte limits and Zod schemas.
-3. `requireUser` validates the Auth.js session and rechecks current user, deletion state, role and session version in PostgreSQL. `requireAdmin` additionally requires `ADMIN`.
-4. Domain/service code performs the operation with principal-scoped or administrator-authorized queries.
-5. `ApiError` becomes a safe normalized JSON response. Unknown errors return a generic 500 and log only a non-sensitive error name.
-6. App Router error/loading/empty components provide retry and configuration states without exposing internal details.
+1. API middleware accepts a bounded incoming `x-request-id` or generates a UUID, forwards it to the route, and returns the same value to the client.
+2. Public server components call server-side integration clients; browser mutations use the API client/route handlers.
+3. Mutating APIs apply origin/Fetch-Site checks, rate limits where configured, streamed byte limits and Zod schemas.
+4. `requireUser` validates the Auth.js session and rechecks current user, deletion state, role and session version in PostgreSQL. `requireAdmin` additionally requires `ADMIN`.
+5. Domain/service code performs the operation with principal-scoped or administrator-authorized queries.
+6. `ApiError` becomes a safe normalized JSON response. Unknown errors return a generic 500 and emit a JSON event containing the request ID, method, pathname, status, safe code and error name—never query strings, bodies, cookies, provider URLs or raw error messages.
+7. App Router error/loading/empty components provide retry and configuration states without exposing internal details.
 
 ## 5. Data flow
 
@@ -70,7 +71,7 @@ Shared packages must not import application pages or route handlers. Browser-saf
 
 PostgreSQL stores identity, metadata, availability snapshots, library state, encrypted playlist/source values, settings, jobs and audit events. Prisma Client 7 uses the PostgreSQL driver adapter. The client initializes lazily so an unconfigured public build does not open a database connection.
 
-The initial migration is in `packages/database/prisma/migrations`. It is manually authored and structurally tested, not evidence of a successful native Prisma diff or executed migration. Applying/seeding a database is an operator-approved operation outside Phase 1.
+The initial migration is in `packages/database/prisma/migrations`. It remains manually authored rather than native-diff-generated. Phase 2 executes it against disposable PostgreSQL 17 clusters: local tests can apply the SQL files directly, while CI is configured to run real `prisma migrate deploy` and verify migration records. The same ephemeral clusters execute the seed and database-backed auth/library acceptance. None of these operations targets a shared or production database; applying migrations there remains operator-approved.
 
 Transcoder state/output uses a worker-local durable directory. Source exports use an external operator-selected directory. Neither is automatically a public object store.
 
@@ -83,7 +84,7 @@ Transcoder state/output uses a worker-local durable directory. Source exports us
 - non-secret integration flags and `databaseReachable` (`true`, `false`, or `null` when unconfigured);
 - version and timestamp, never connection strings or credentials.
 
-Basic logging uses `console` at API/process/worker boundaries and Prisma warning/error channels. Messages avoid credentials and request bodies. Structured logging, correlation IDs and central aggregation remain production-hardening work.
+API errors, public discovery failures and rate-limit rejections use a shared JSON log schema with timestamp, level, event and allowlisted request fields. Raw Prisma query logging is disabled because it can include query inputs; application boundaries emit sanitized errors instead. Request IDs correlate responses and logs without accepting malformed header values. Central log aggregation, metrics/tracing and worker-wide correlation remain production-hardening work.
 
 ## 8. Security boundaries
 
@@ -93,13 +94,14 @@ CSP/security headers, input limits, origin checks, output escaping, encrypted so
 
 ## 9. Testing and delivery
 
-- Vitest covers unit, mocked integration and security contracts.
-- Playwright covers public desktop/mobile behavior against a real application.
-- GitHub Actions checks clean frozen installation, Prisma, lint, types, tests, builds, audit, browser behavior, container builds and exports.
+- Vitest covers unit, mocked integration and security contracts, plus a real disposable PostgreSQL 17 migration/seed/auth/library suite.
+- Live TMDB tests are read-only, credential-dependent and explicitly opt-in; otherwise they are reported skipped.
+- Playwright covers public desktop/mobile behavior, request IDs, search keyboard/loading/empty/error states, filters, focus, reduced motion and overflow against a real application.
+- GitHub Actions checks clean frozen installation, Prisma CLI migration acceptance, lint, types, tests, builds, audit, browser behavior, container builds and exports.
 - Docker Compose provides optional local PostgreSQL/web/worker/transcoder services; migrations never run automatically.
 - Vercel/Netlify configuration describes deployment targets but does not deploy them.
 
-Passing local/CI checks is not evidence of live provider connectivity, real playback, migration execution, CMS installation or production deployment.
+Passing local/CI checks is not evidence of shared/production migration, live provider connectivity, real playback, CMS installation or production deployment. Disposable database acceptance is reported separately from those external states.
 
 ## 10. Scaling path
 
@@ -107,4 +109,4 @@ Start with one web instance and managed PostgreSQL. Add a shared rate limiter be
 
 ## 11. Current review boundary
 
-Phase 0/Phase 1 covers audit and foundation verification only. Existing later-phase modules are preserved. Phase 2 changes remain blocked until explicit approval, as tracked in `docs/IMPLEMENTATION-ROADMAP.md`.
+Phase 0/Phase 1 covered audit and foundation verification. Phase 2 is explicitly approved for core validation and discovery; later-phase modules and external production state remain outside that approval, as tracked in `docs/IMPLEMENTATION-ROADMAP.md`.

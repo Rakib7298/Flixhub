@@ -5,7 +5,7 @@ import { favoriteSchema } from "@/lib/validation";
 import { getTmdbClient } from "@/lib/tmdb";
 
 export const dynamic = "force-dynamic";
-export async function GET() { try { const user = await requireUser(); const items = await db.favorite.findMany({ where: { userId: user.id, tmdbId: { not: null } }, orderBy: { createdAt: "desc" }, take: 200 }); return NextResponse.json({ items }, { headers: { "Cache-Control": "no-store" } }); } catch (error) { return handleApiError(error); } }
+export async function GET(request: Request) { try { const user = await requireUser(); const items = await db.favorite.findMany({ where: { userId: user.id, tmdbId: { not: null } }, orderBy: { createdAt: "desc" }, take: 200 }); return NextResponse.json({ items }, { headers: { "Cache-Control": "no-store" } }); } catch (error) { return handleApiError(error, request); } }
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,5 +16,5 @@ export async function POST(request: NextRequest) {
     if (!title) return NextResponse.json({ error: { code: "METADATA_REQUIRED", message: "Valid title metadata is required." } }, { status: 400 });
     const item = await db.favorite.upsert({ where: { userId_mediaKey: { userId: user.id, mediaKey } }, update: { title, posterPath, mediaType: input.mediaType, tmdbId: input.tmdbId }, create: { userId: user.id, mediaKey, title, posterPath, mediaType: input.mediaType, tmdbId: input.tmdbId } });
     return NextResponse.json({ saved: true, item }, { status: 201 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

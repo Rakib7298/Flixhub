@@ -1,5 +1,7 @@
 # MediaMatrix repository audit
 
+> Historical Phase 0/Phase 1 baseline. Statements about unexecuted database runtime and basic logging describe that checkpoint. Current Phase 2 implementation and evidence are in `docs/TESTING.md` and `docs/IMPLEMENTATION-ROADMAP.md`.
+
 **Audit date:** 2026-11-03
 **Audited baseline:** `07b60dc` on `arena/ec083c70-flixhub`
 **Classification:** **C — existing working application**

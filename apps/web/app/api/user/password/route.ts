@@ -18,5 +18,5 @@ export async function POST(request: NextRequest) {
     await db.user.update({ where: { id: user.id }, data: { passwordHash: await hash(input.password, 12), sessionVersion: { increment: 1 } } });
     await db.auditLog.create({ data: { actorId: user.id, action: "account.password_changed", entity: "User", entityId: user.id, metadata: {} } });
     return NextResponse.json({ message: "Password updated. Sign in again on all devices." });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

@@ -16,5 +16,5 @@ export async function GET(request: NextRequest) {
     const records = await db.mediaSource.findMany({ where: { ...(type === "movie" ? { movieId: parent.id } : { tvSeriesId: parent.id }), isActive: true, deletedAt: null, ...(user ? {} : { requiresAuth: false }) }, orderBy: { label: "asc" } });
     const items = records.flatMap((source) => { const url = decryptSecret(source.sourceUrlCiphertext); if (!source.requiresAuth && hasSensitiveUrlParameters(url)) return []; return [{ id: source.id, label: source.label, url, format: source.format, requiresAuth: source.requiresAuth }]; });
     return NextResponse.json({ items }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

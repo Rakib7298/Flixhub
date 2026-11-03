@@ -2,7 +2,7 @@
 
 ## Current gate
 
-**Phase 0 and Phase 1 are the only active scope. Phase 2 is blocked pending explicit human approval.**
+**Phase 2 is explicitly approved and is the only active implementation scope. Later phases remain blocked pending new human approval.**
 
 The repository already contains later-phase source modules. They are preserved as existing work. This roadmap does not retroactively claim that those modules were reviewed, externally verified, or approved for production.
 
@@ -40,37 +40,40 @@ The repository already contains later-phase source modules. They are preserved a
 
 **Exit criteria:** the foundation commands in `docs/PROJECT-AUDIT.md` and `AGENTS.md` pass, no working feature is removed, no secret is committed, no migration/deployment is performed, and the reviewer explicitly approves Phase 2.
 
-## Phase 2 — recommended core validation and discovery work
+## Phase 2 — core validation and discovery
 
-> Do not start these tasks until Phase 0/Phase 1 approval is recorded.
+> Implementation and local verification are complete; real Prisma CLI migration and expanded browser execution remain CI review gates at this checkpoint.
 
 ### 2.1 Isolated database acceptance
 
-- Provision a disposable PostgreSQL test database with least-privilege credentials.
-- Review and apply the initial migration only with operator approval; compare the resulting schema with Prisma.
-- Seed non-production roles/admin credentials without logging secrets.
-- Add executable integration tests for registration, login, session invalidation, RBAC, profile, watchlist, favorites, history and progress.
-- Test rollback/recovery procedures and backup expectations without touching production data.
+- [x] Provision a disposable PostgreSQL 17 cluster with generated test-only credentials and automatic cleanup.
+- [x] Apply the checked-in SQL migration locally and compare actual tables/enums with the Prisma model contract.
+- [ ] Complete real `prisma migrate deploy` acceptance in CI (configured; execution pending).
+- [x] Seed non-production roles/admin credentials and canonical genres without logging secrets.
+- [x] Exercise registration, credentials, session invalidation, RBAC, profile/preferences, watchlist, favorites, history and progress.
+- [ ] Perform operator-approved rollback/recovery and backup/restore acceptance (not attempted; no shared data touched).
 
-### 2.2 Live TMDB provider acceptance
+### 2.2 TMDB provider acceptance
 
-- Use authorized server-side TMDB credentials in a secret-managed test environment.
-- Verify discover, multi-search, details, credits, seasons/episodes, people, images, pagination and provider errors.
-- Confirm normalization, cache behavior and honest empty/error states; never add a fabricated production fallback.
-- Record rate-limit, attribution and availability constraints.
+- [ ] Run authorized live TMDB acceptance (three tests currently skipped because credentials/opt-in are absent).
+- [x] Verify discover, multi-search, details, credits, seasons/episodes, people, image paths, pagination and provider errors with deterministic mocked contracts.
+- [x] Confirm normalization, cache/retry behavior and honest empty/error states without a fabricated production fallback.
+- [x] Preserve TMDB attribution and document client/provider limits.
 
 ### 2.3 Core discovery UX acceptance
 
-- Review home, catalog, filters, search and detail journeys on desktop/mobile.
-- Exercise keyboard navigation, focus states, reduced motion, loading/error/empty states and accessible names.
-- Run browser tests against real test-provider responses where permitted, keeping secrets out of artifacts.
+- [x] Review home, catalog, filters, search and detail journeys and preserve existing server-rendering architecture.
+- [x] Implement/test keyboard navigation, focus states, reduced motion, loading/error/empty states and accessible names.
+- [ ] Execute the expanded 20-scenario desktop/mobile Playwright suite in CI (20 discovered locally; Chromium execution unavailable locally).
+- [ ] Run browser journeys against live test-provider responses where permitted; this remains tied to authorized TMDB credentials.
 
 ### 2.4 Foundation hardening carried into Phase 2
 
-- Add request correlation IDs and a shared structured-log schema without sensitive payloads.
-- Narrow relaxed lint rules where practical.
-- Define the shared rate-limit/edge-limit strategy before multi-instance deployment.
-- Evaluate CI action major upgrades in an isolated maintenance change.
+- [x] Add validated request correlation IDs and a shared structured-log schema without sensitive payloads.
+- [x] Enforce `no-explicit-any` and `error-boundaries` globally; confine remaining effect-rule debt to six named legacy components.
+- [x] Test and document the process-local rate-limit contract and the shared/edge requirement before multi-instance deployment.
+- [x] Evaluate action major upgrades; defer checkout/setup-node/upload-artifact v7 and pnpm/action-setup v6 to isolated maintenance.
+- [ ] Pass the complete Phase 2 GitHub Actions review gate and inspect the final diff before delivery.
 
 ## Later phases — not active
 

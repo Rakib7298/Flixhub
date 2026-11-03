@@ -17,11 +17,16 @@ export default async function TvPage({ searchParams }: { searchParams: SearchPar
   const page = integer(params.page, 1);
   const client = getTmdbClient();
   if (!client) return <Shell current={current} genres={[]}><ConfigurationNotice /></Shell>;
+  const data = await loadCatalog(client, current, page);
+  return <Shell current={current} genres={data?.genres ?? []}>{data ? <><p className="mb-5 text-xs text-zinc-500">{data.result.totalResults.toLocaleString()} series from TMDB</p><MediaGrid items={data.result.results} /><Pagination page={data.result.page} totalPages={data.result.totalPages} pathname="/tv" query={{ ...current, sort: current.sortBy }} /></> : <ErrorState description="The TV catalog is temporarily unavailable. Please try again shortly." />}</Shell>;
+}
+
+async function loadCatalog(client: NonNullable<ReturnType<typeof getTmdbClient>>, current: { genre?: number; year?: number; minRating?: number; sortBy?: string }, page: number) {
   try {
     const [result, genres] = await Promise.all([client.discover("tv", { page, ...current }), client.genres("tv")]);
-    return <Shell current={current} genres={genres}><p className="mb-5 text-xs text-zinc-500">{result.totalResults.toLocaleString()} series from TMDB</p><MediaGrid items={result.results} /><Pagination page={result.page} totalPages={result.totalPages} pathname="/tv" query={{ ...current, sort: current.sortBy }} /></Shell>;
+    return { result, genres };
   } catch {
-    return <Shell current={current} genres={[]}><ErrorState description="The TV catalog is temporarily unavailable. Please try again shortly." /></Shell>;
+    return null;
   }
 }
 

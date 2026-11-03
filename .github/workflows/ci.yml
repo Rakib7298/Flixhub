@@ -35,6 +35,10 @@ jobs:
       - run: pnpm lint
       - run: pnpm -r --no-bail --if-present typecheck
       - run: pnpm test:unit
+      - name: Isolated PostgreSQL migration and provider integration
+        run: pnpm test:integration
+        env:
+          MEDIAMATRIX_TEST_MIGRATION: prisma
       - run: pnpm test:security
       - run: pnpm build
       - run: pnpm validate:config

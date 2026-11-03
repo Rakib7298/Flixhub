@@ -12,5 +12,5 @@ export async function PATCH(request: NextRequest) {
     const input = await parseBody(request, z.object({ name: z.string().trim().min(1).max(80) }).strict());
     const updated = await db.user.update({ where: { id: user.id }, data: { name: input.name }, select: { id: true, email: true, username: true, name: true } });
     return NextResponse.json({ user: updated });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

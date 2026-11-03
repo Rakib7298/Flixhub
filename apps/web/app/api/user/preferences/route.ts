@@ -5,12 +5,12 @@ import { preferenceSchema } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireUser();
     const preference = await db.userPreference.upsert({ where: { userId: user.id }, update: {}, create: { userId: user.id } });
     return NextResponse.json({ preference }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 export async function PATCH(request: NextRequest) {
@@ -20,5 +20,5 @@ export async function PATCH(request: NextRequest) {
     const input = await parseBody(request, preferenceSchema);
     const preference = await db.userPreference.upsert({ where: { userId: user.id }, update: input, create: { userId: user.id, ...input } });
     return NextResponse.json({ preference });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

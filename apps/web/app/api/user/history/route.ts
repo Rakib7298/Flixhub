@@ -5,12 +5,12 @@ import { historySchema } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireUser();
     const items = await db.watchHistory.findMany({ where: { userId: user.id }, orderBy: { watchedAt: "desc" }, take: 100 });
     return NextResponse.json({ items }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 export async function POST(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     if (recent) return NextResponse.json({ item: recent });
     const item = await db.watchHistory.create({ data: { userId: user.id, ...input } });
     return NextResponse.json({ item }, { status: 201 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 export async function DELETE(request: NextRequest) {
@@ -34,5 +34,5 @@ export async function DELETE(request: NextRequest) {
       db.auditLog.create({ data: { actorId: user.id, action: "history.cleared", entity: "WatchHistory", metadata: {} } }),
     ]);
     return new NextResponse(null, { status: 204 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

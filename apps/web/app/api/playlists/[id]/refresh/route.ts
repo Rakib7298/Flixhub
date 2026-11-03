@@ -15,7 +15,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const result = await refreshPlaylistRecord(id, user);
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof ApiError) return handleApiError(error);
-    return handleApiError(new ApiError(422, "SYNC_FAILED", "Playlist synchronization failed. Existing channels were preserved; check the sanitized sync status for details."));
+    if (error instanceof ApiError) return handleApiError(error, request);
+    return handleApiError(new ApiError(422, "SYNC_FAILED", "Playlist synchronization failed. Existing channels were preserved; check the sanitized sync status for details."), request);
   }
 }

@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     const updated = await db.playlist.update({ where: { id }, data: { ...input, ...(input.enabled !== undefined ? { status: input.enabled ? "ACTIVE" : "DISABLED" } : {}) }, select: { id: true, name: true, enabled: true, isPublic: true, status: true, refreshMinutes: true } });
     await db.auditLog.create({ data: { actorId: user.id, action: "playlist.updated", entity: "Playlist", entityId: id, metadata: { fields: Object.keys(input) } } });
     return NextResponse.json({ playlist: updated });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }
 
 export async function DELETE(request: NextRequest, { params }: Context) {
@@ -30,5 +30,5 @@ export async function DELETE(request: NextRequest, { params }: Context) {
     if (!playlist || (playlist.ownerId !== user.id && user.role !== "ADMIN")) throw new ApiError(404, "NOT_FOUND", "Playlist not found.");
     await db.$transaction([db.auditLog.create({ data: { actorId: user.id, action: "playlist.deleted", entity: "Playlist", entityId: id, metadata: {} } }), db.playlist.delete({ where: { id } })]);
     return new NextResponse(null, { status: 204 });
-  } catch (error) { return handleApiError(error); }
+  } catch (error) { return handleApiError(error, request); }
 }

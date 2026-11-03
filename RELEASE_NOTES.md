@@ -1,5 +1,7 @@
 # MediaMatrix v1.0.0 — 2026-11-03
 
+> These are the Phase 1 release notes and retain their original verification counts. Phase 2 does not claim a new export release; current acceptance evidence is maintained in `docs/TESTING.md`.
+
 ## Highlights
 
 - Replaced the initial Flixhub placeholder with a cinematic, responsive media discovery and authorized-playback application.
