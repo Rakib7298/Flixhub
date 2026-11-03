@@ -20,6 +20,8 @@ pnpm validate:export
 
 ## Coverage of automated tests
 
+- Environment defaults, URL/boolean/numeric validation, complete integration flags and non-secret status projections.
+- Health behavior for unconfigured, reachable and unreachable database states, including cache and secret-exposure checks.
 - M3U metadata/group parsing, duplicates, invalid schemes/credentials, HLS-playlist rejection, orphan entries, and limits.
 - Playback format detection, unsafe URLs, generic errors, and shared display helpers.
 - Country-specific availability normalization, official URL sanitization, v4 endpoint/header contracts, and no cross-country substitution.

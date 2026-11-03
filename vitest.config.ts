@@ -2,7 +2,12 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  resolve: { alias: { "@": path.resolve(__dirname, "apps/web") } },
+  resolve: {
+    alias: {
+      "@mediamatrix/database": path.resolve(__dirname, "packages/database/src/index.ts"),
+      "@": path.resolve(__dirname, "apps/web"),
+    },
+  },
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts", "packages/**/*.test.ts", "services/**/*.test.ts", "apps/web/lib/**/*.test.ts"],

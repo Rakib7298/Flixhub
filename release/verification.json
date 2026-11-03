@@ -2,7 +2,7 @@
   "application": "MediaMatrix",
   "version": "1.0.0",
   "releaseDate": "2026-11-03",
-  "generatedAt": "2026-11-03T10:58:26Z",
+  "generatedAt": "2026-11-03T11:21:27Z",
   "environment": {
     "node": "22.22.3",
     "pnpm": "9.15.9",
@@ -18,7 +18,7 @@
       "name": "dependency-install",
       "status": "passed",
       "command": "pnpm install",
-      "evidence": "Workspace dependencies installed and pnpm-lock.yaml updated after security remediation."
+      "evidence": "Frozen-lockfile installation passed during the Phase 1 review; the lockfile was already up to date and unchanged."
     },
     {
       "name": "prisma-client-generation",
@@ -42,7 +42,7 @@
       "name": "automated-tests",
       "status": "passed",
       "command": "pnpm test",
-      "evidence": "33/33 tests passed in 9/9 files."
+      "evidence": "39/39 tests passed in 11/11 files, including focused environment-validation and health checks."
     },
     {
       "name": "security-tests",

@@ -28,6 +28,8 @@ services:
       DATABASE_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
       DIRECT_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in the environment}
+      AUTH_TRUST_HOST: ${AUTH_TRUST_HOST:-true}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
       SYNC_CRON_SECRET: ${SYNC_CRON_SECRET:-}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       TMDB_API_KEY: ${TMDB_API_KEY:-}

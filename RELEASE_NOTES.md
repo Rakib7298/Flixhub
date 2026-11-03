@@ -21,7 +21,7 @@
 
 - ESLint passed.
 - All 16 workspace typechecks passed.
-- 33/33 automated Vitest tests passed across 9 files.
+- 39/39 automated Vitest tests passed across 11 files, including focused environment and health checks.
 - Security-only 10/10 and mocked integration 3/3 passes confirmed.
 - Next.js production build passed with 20 static pages and standalone assets.
 - Production standalone HTTP smoke checks passed for home/login/static assets/CSP and honest unavailable health/discovery responses.
