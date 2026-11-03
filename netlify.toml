@@ -1,0 +1,13 @@
+[build]
+  command = "pnpm build"
+  publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "9.15.9"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# FFmpeg and persistent workers are intentionally not Netlify Functions.
+# Deploy services/transcoder and workers separately, then configure server-only URLs/keys.

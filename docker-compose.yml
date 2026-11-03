@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mediamatrix
+      POSTGRES_USER: mediamatrix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the environment}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediamatrix -d mediamatrix"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
+      DIRECT_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in the environment}
+      SYNC_CRON_SECRET: ${SYNC_CRON_SECRET:-}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN:-}
+      STREAMING_AVAILABILITY_API_KEY: ${STREAMING_AVAILABILITY_API_KEY:-}
+      STREAMING_API_PROVIDER: ${STREAMING_API_PROVIDER:-}
+      STREAMING_API_BASE_URL: ${STREAMING_API_BASE_URL:-}
+      TRANSCODER_WORKER_URL: ${TRANSCODER_WORKER_URL:-}
+      TRANSCODER_WORKER_API_KEY: ${TRANSCODER_WORKER_API_KEY:-}
+    ports:
+      - "3000:3000"
+
+  transcoder:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/transcoder.Dockerfile
+    profiles: ["transcoding"]
+    restart: unless-stopped
+    environment:
+      TRANSCODER_PORT: 4100
+      TRANSCODER_WORKER_API_KEY: ${TRANSCODER_WORKER_API_KEY:-}
+      TRANSCODER_STORAGE_ROOT: /data
+    volumes:
+      - transcoder-data:/data
+    ports:
+      - "4100:4100"
+
+  sync-worker:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/worker.Dockerfile
+      args:
+        WORKER_PACKAGE: "@mediamatrix/sync-worker"
+    profiles: ["workers"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
+      DIRECT_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
+      TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN:-}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      TMDB_SYNC_IDS: ${TMDB_SYNC_IDS:-}
+
+  playlist-worker:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/worker.Dockerfile
+      args:
+        WORKER_PACKAGE: "@mediamatrix/playlist-worker"
+    profiles: ["workers"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      web:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
+      DIRECT_URL: postgresql://mediamatrix:${POSTGRES_PASSWORD}@postgres:5432/mediamatrix
+      WEB_INTERNAL_URL: http://web:3000
+      SYNC_CRON_SECRET: ${SYNC_CRON_SECRET:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      PLAYLIST_ALLOW_PRIVATE_NETWORK: "false"
+
+volumes:
+  postgres-data:
+  transcoder-data:
