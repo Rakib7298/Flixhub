@@ -57,7 +57,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "fast-xml-parser": "5.11.2",
     "globals": "^16.5.0",
-    "next": "15.5.28",
+    "next": "15.5.29",
     "tsx": "^4.21.0",
     "turbo": "^2.6.3",
     "typescript": "^5.9.3",
